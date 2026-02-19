@@ -1,6 +1,7 @@
 package com.owsm.AuthService.service.handler;
 
 import com.owsm.AuthService.dto.RoleRequest;
+import com.owsm.AuthService.dto.RoleResponse;
 import com.owsm.AuthService.model.Role;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,5 +26,12 @@ public class RoleServiceHandler {
         roleRequest.setId(savedRole.getId());
         roleRequest.setName(savedRole.getName().name());
         return roleRequest;
+    }
+
+    public RoleResponse convertToRoleResponse(Role role) {
+        RoleResponse roleResponse = new RoleResponse();
+        roleResponse.setId(role.getId());
+        roleResponse.setName(role.getName().name());
+        return roleResponse;
     }
 }

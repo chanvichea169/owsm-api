@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(HmsException.class)
-    public ResponseEntity<String> handleHmsException(HmsException ex) {
+    @ExceptionHandler(OwsmException.class)
+    public ResponseEntity<String> handleHmsException(OwsmException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 

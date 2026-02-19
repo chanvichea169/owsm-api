@@ -3,13 +3,13 @@ package com.owsm.AuthService.service.serviceImpl;
 import com.owsm.AuthService.Api.JwtUtil;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
-import com.owsm.AuthService.exception.HmsException;
+import com.owsm.AuthService.exception.OwsmException;
 import com.owsm.AuthService.model.Role;
 import com.owsm.AuthService.model.User;
 import com.owsm.AuthService.repository.RoleRepository;
 import com.owsm.AuthService.repository.UserRepository;
 import com.owsm.AuthService.service.UserService;
-import com.owsm.AuthService.service.handler.UserHandlerService;
+import com.owsm.AuthService.service.handler.UserServiceHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserHandlerService userHandlerService;
+    private final UserServiceHandler userServiceHandler;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
     private final JwtUtil jwtUtil;
@@ -39,15 +39,15 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
 
     @Override
-    public UserResponse registerUser(UserRequest request) throws HmsException {
-        userHandlerService.validateUsername(request.getUsername());
-        userHandlerService.validateEmail(request.getEmail());
+    public UserResponse registerUser(UserRequest request) throws OwsmException {
+        userServiceHandler.validateUsername(request.getUsername());
+        userServiceHandler.validateEmail(request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new HmsException("USER_NOT_FOUND");
+            throw new OwsmException("USER_NOT_FOUND");
         }
 
-        User user = userHandlerService.convertToUser(request);
+        User user = userServiceHandler.convertToUser(request);
         if (request.getRoleId() != null) {
             Role role = roleRepository.findById(request.getRoleId())
                     .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleId()));
@@ -63,11 +63,11 @@ public class UserServiceImpl implements UserService {
 
         sendOtpEmail(user.getEmail(), otp);
 
-        return userHandlerService.convertToUserResponse(user);
+        return userServiceHandler.convertToUserResponse(user);
     }
 
     @Override
-    public UserResponse loginUser(UserRequest request) throws HmsException {
+    public UserResponse loginUser(UserRequest request) throws OwsmException {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -76,17 +76,17 @@ public class UserServiceImpl implements UserService {
         final String token = jwtUtil.generateToken(userDetails);
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new HmsException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
-        UserResponse response = userHandlerService.convertToUserResponse(user);
+        UserResponse response = userServiceHandler.convertToUserResponse(user);
         response.setToken(token);
         return response;
     }
 
     @Override
-    public UserResponse verifyOtp(String email, String otp) throws HmsException {
+    public UserResponse verifyOtp(String email, String otp) throws OwsmException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new HmsException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (user.getOtp() == null) {
             throw new RuntimeException("No OTP found for this user");
@@ -102,16 +102,16 @@ public class UserServiceImpl implements UserService {
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(email);
         final String token = jwtUtil.generateToken(userDetails);
-        UserResponse response = userHandlerService.convertToUserResponse(user);
+        UserResponse response = userServiceHandler.convertToUserResponse(user);
         response.setToken(token);
 
         return response;
     }
 
     @Override
-    public void resendOtp(String email) throws HmsException {
+    public void resendOtp(String email) throws OwsmException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new HmsException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (user.isEnabled()) {
             throw new RuntimeException("User is already enabled");
@@ -125,12 +125,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUser(Long id, UserRequest request) throws HmsException {
+    public UserResponse updateUser(Long id, UserRequest request) throws OwsmException {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new HmsException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
-        userHandlerService.validateUsername(request.getUsername());
-        userHandlerService.validateEmail(request.getEmail());
+        userServiceHandler.validateUsername(request.getUsername());
+        userServiceHandler.validateEmail(request.getEmail());
 
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -145,40 +145,31 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(new java.util.Date());
 
         userRepository.save(user);
-        return userHandlerService.convertToUserResponse(user);
+        return userServiceHandler.convertToUserResponse(user);
     }
 
     @Override
-    public void deleteUser(Long id) throws HmsException {
-        // Placeholder for credential validation.
-        // In a real application, you would check if the currently authenticated user
-        // has the necessary permissions to delete this user, or if they are trying
-        // to delete their own account.
-        // For demonstration, this will always throw an exception.
-        // For example: if (currentUser.getId() != id && !currentUser.hasRole("ADMIN")) {
-        // throw new HmsException("Credential validation failed");
-        // }
-        // For now, let's assume some validation failed for demonstration purpose:
-        if (id == 1L) { // Example: If user with ID 1 is being deleted, simulate a validation failure
-            throw new HmsException("Credential validation failed");
+    public void deleteUser(Long id) throws OwsmException {
+        if (id == 1L) {
+            throw new OwsmException("Credential validation failed");
         }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new HmsException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
         userRepository.delete(user);
     }
 
     @Override
     public Optional<UserResponse> getUserById(Long id) {
         return userRepository.findById(id)
-                .map(userHandlerService::convertToUserResponse);
+                .map(userServiceHandler::convertToUserResponse);
     }
 
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(userHandlerService::convertToUserResponse)
+                .map(userServiceHandler::convertToUserResponse)
                 .collect(Collectors.toList());
     }
 

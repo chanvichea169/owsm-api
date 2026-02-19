@@ -2,18 +2,18 @@ package com.owsm.AuthService.service;
 
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
-import com.owsm.AuthService.exception.HmsException;
+import com.owsm.AuthService.exception.OwsmException;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    UserResponse registerUser(UserRequest request) throws HmsException;
-    UserResponse loginUser(UserRequest request) throws HmsException;
-    UserResponse verifyOtp(String email, String otp) throws HmsException;
-    void resendOtp(String email) throws HmsException;
-    UserResponse updateUser(Long id, UserRequest request) throws HmsException;
-    void deleteUser(Long id) throws HmsException;
+    UserResponse registerUser(UserRequest request) throws OwsmException;
+    UserResponse loginUser(UserRequest request) throws OwsmException;
+    UserResponse verifyOtp(String email, String otp) throws OwsmException;
+    void resendOtp(String email) throws OwsmException;
+    UserResponse updateUser(Long id, UserRequest request) throws OwsmException;
+    void deleteUser(Long id) throws OwsmException;
     Optional<UserResponse> getUserById(Long id);
     List<UserResponse> getAllUsers();
 }

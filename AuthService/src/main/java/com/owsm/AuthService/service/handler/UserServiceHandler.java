@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Service
 @Slf4j
-public class UserHandlerService {
+public class UserServiceHandler {
 
     @Autowired
     private RoleRepository roleRepository;

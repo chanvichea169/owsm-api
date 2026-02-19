@@ -3,7 +3,7 @@ package com.owsm.AuthService.controller;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.dto.VerifyOtpRequest;
-import com.owsm.AuthService.exception.HmsException;
+import com.owsm.AuthService.exception.OwsmException;
 import com.owsm.AuthService.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,7 @@ public class UserController {
             return ResponseEntity.ok(userService.registerUser(request));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -38,7 +38,7 @@ public class UserController {
             return ResponseEntity.ok(userService.loginUser(request));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -59,7 +59,7 @@ public class UserController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -73,7 +73,7 @@ public class UserController {
             return ResponseEntity.ok("OTP resent successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -84,7 +84,7 @@ public class UserController {
             return ResponseEntity.ok(userService.updateUser(id, request));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -108,7 +108,7 @@ public class UserController {
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (HmsException e) {
+        } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
     }

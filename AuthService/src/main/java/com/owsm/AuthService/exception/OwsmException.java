@@ -1,12 +1,12 @@
 package com.owsm.AuthService.exception;
 
-public class HmsException extends Exception {
+public class OwsmException extends Exception {
     public static final long serialVersionUID = 1L;
-    public HmsException(String message) {
+    public OwsmException(String message) {
         super(message);
     }
 
-    public HmsException() {
+    public OwsmException() {
         super("Forbidden");
     }
 }

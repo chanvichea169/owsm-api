@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
@@ -50,8 +51,8 @@ public class UserServiceHandler {
             user.setRole(role);
         }
         user.setPassword(request.getPassword());
-        user.setCreatedAt(new Date());
-        user.setUpdatedAt(new Date());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
         return user;
     }
 
@@ -64,8 +65,8 @@ public class UserServiceHandler {
             userResponse.setRole(user.getRole().getName().name());
         }
         userResponse.setEnabled(user.isEnabled());
-        userResponse.setCreatedAt(user.getCreatedAt());
-        userResponse.setUpdatedAt(user.getUpdatedAt());
+        userResponse.setCreatedAt(java.util.Date.from(user.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()));
+        userResponse.setUpdatedAt(java.util.Date.from(user.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()));
         return userResponse;
     }
 }

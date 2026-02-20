@@ -142,7 +142,7 @@ public class UserServiceImpl implements UserService {
                     .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleId()));
             user.setRole(role);
         }
-        user.setUpdatedAt(new java.util.Date());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
 
         userRepository.save(user);
         return userServiceHandler.convertToUserResponse(user);

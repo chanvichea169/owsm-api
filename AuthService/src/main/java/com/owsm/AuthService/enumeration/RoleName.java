@@ -5,6 +5,6 @@ public enum RoleName {
     USER,
     HR,
     OFFICER,
-    OWNER_COMPANY,
+    HEAD_OF_DEPARTMENT,
 
 }

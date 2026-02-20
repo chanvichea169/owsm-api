@@ -1,5 +1,6 @@
 package com.owsm.AuthService.model;
 
+import com.owsm.AuthService.common.audit.BaseEntity;
 import com.owsm.AuthService.enumeration.RoleName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,8 +13,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "roles")
-public class Role {
+@Table(name = "tbl_roles")
+public class Role extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

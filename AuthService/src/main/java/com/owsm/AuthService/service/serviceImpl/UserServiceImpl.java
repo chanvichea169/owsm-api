@@ -19,7 +19,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -38,126 +41,185 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsService userDetailsService;
     private final RoleRepository roleRepository;
 
+    // ================= REGISTER =================
+
     @Override
     public UserResponse registerUser(UserRequest request) throws OwsmException {
+
         userServiceHandler.validateUsername(request.getUsername());
         userServiceHandler.validateEmail(request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new OwsmException("USER_NOT_FOUND");
+            throw new OwsmException("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new OwsmException("USERNAME_ALREADY_EXISTS");
         }
 
         User user = userServiceHandler.convertToUser(request);
+
         if (request.getRoleId() != null) {
             Role role = roleRepository.findById(request.getRoleId())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleId()));
+                    .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
             user.setRole(role);
         }
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        String otp = generateOtp();
-        user.setOtp(otp);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setOtp(generateOtp());
         user.setEnabled(false);
 
         userRepository.save(user);
 
-        sendOtpEmail(user.getEmail(), otp);
+        sendOtpEmail(user.getEmail(), user.getOtp());
 
         return userServiceHandler.convertToUserResponse(user);
     }
+
+    // ================= LOGIN =================
 
     @Override
     public UserResponse loginUser(UserRequest request) throws OwsmException {
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
         );
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        final String token = jwtUtil.generateToken(userDetails);
 
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = (User) userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
-        UserResponse response = userServiceHandler.convertToUserResponse(user);
+        if (!user.isEnabled()) {
+            throw new OwsmException("ACCOUNT_NOT_VERIFIED");
+        }
+
+        UserDetails userDetails =
+                userDetailsService.loadUserByUsername(user.getUsername());
+
+        String token = jwtUtil.generateToken(userDetails);
+
+        UserResponse response =
+                userServiceHandler.convertToUserResponse(user);
         response.setToken(token);
+
         return response;
     }
 
+    // ================= VERIFY OTP =================
+
     @Override
-    public UserResponse verifyOtp(String email, String otp) throws OwsmException {
+    public UserResponse verifyOtp(String email, String otp)
+            throws OwsmException {
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (user.getOtp() == null) {
-            throw new RuntimeException("No OTP found for this user");
+            throw new OwsmException("OTP_EXPIRED");
         }
 
         if (!user.getOtp().trim().equals(otp.trim())) {
-            throw new RuntimeException("Invalid OTP");
+            throw new OwsmException("INVALID_OTP");
         }
 
         user.setEnabled(true);
         user.setOtp(null);
+
         userRepository.save(user);
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        final String token = jwtUtil.generateToken(userDetails);
-        UserResponse response = userServiceHandler.convertToUserResponse(user);
+        UserDetails userDetails =
+                userDetailsService.loadUserByUsername(user.getUsername());
+
+        String token = jwtUtil.generateToken(userDetails);
+
+        UserResponse response =
+                userServiceHandler.convertToUserResponse(user);
         response.setToken(token);
 
         return response;
     }
 
+    // ================= RESEND OTP =================
+
     @Override
     public void resendOtp(String email) throws OwsmException {
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (user.isEnabled()) {
-            throw new RuntimeException("User is already enabled");
+            throw new OwsmException("ACCOUNT_ALREADY_VERIFIED");
         }
 
-        String otp = generateOtp();
-        user.setOtp(otp);
+        user.setOtp(generateOtp());
         userRepository.save(user);
 
-        sendOtpEmail(user.getEmail(), otp);
+        sendOtpEmail(user.getEmail(), user.getOtp());
     }
 
+    // ================= UPDATE USER =================
+
     @Override
-    public UserResponse updateUser(Long id, UserRequest request) throws OwsmException {
+    public UserResponse updateUser(Long id, UserRequest request)
+            throws OwsmException {
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         userServiceHandler.validateUsername(request.getUsername());
         userServiceHandler.validateEmail(request.getEmail());
 
+        if (!user.getEmail().equals(request.getEmail())
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new OwsmException("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (!user.getUsername().equals(request.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new OwsmException("USERNAME_ALREADY_EXISTS");
+        }
+
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (request.getPassword() != null
+                && !request.getPassword().isBlank()) {
+            user.setPassword(
+                    passwordEncoder.encode(request.getPassword())
+            );
         }
+
         if (request.getRoleId() != null) {
             Role role = roleRepository.findById(request.getRoleId())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleId()));
+                    .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
             user.setRole(role);
         }
-        user.setUpdatedAt(java.time.LocalDateTime.now());
+
+        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+
         return userServiceHandler.convertToUserResponse(user);
     }
 
+    // ================= DELETE =================
+
     @Override
     public void deleteUser(Long id) throws OwsmException {
+
         if (id == 1L) {
-            throw new OwsmException("Credential validation failed");
+            throw new OwsmException("SUPER_ADMIN_CANNOT_BE_DELETED");
         }
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+
         userRepository.delete(user);
     }
+
+    // ================= GET =================
 
     @Override
     public Optional<UserResponse> getUserById(Long id) {
@@ -173,17 +235,18 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    // ================= UTILITIES =================
+
     private String generateOtp() {
         Random random = new Random();
-        int otp = 100000 + random.nextInt(900000);
-        return String.valueOf(otp);
+        return String.valueOf(100000 + random.nextInt(900000));
     }
 
     private void sendOtpEmail(String to, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
-        message.setSubject("Your OTP for registration");
-        message.setText("Your OTP is: " + otp);
+        message.setSubject("OWSM Account Verification OTP");
+        message.setText("Your OTP code is: " + otp);
         mailSender.send(message);
     }
 }

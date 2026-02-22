@@ -10,8 +10,8 @@ public class UserResponse {
     private String username;
     private String email;
     private boolean enabled;
-    private String role;
     private String token;
+    private RoleResponse role;
     private Date createdAt;
     private Date updatedAt;
 }

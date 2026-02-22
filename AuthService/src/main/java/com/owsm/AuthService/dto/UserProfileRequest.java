@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,10 +23,6 @@ public class UserProfileRequest {
     @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    private String email;
-
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
     private String phoneNumber;
 
@@ -38,5 +36,12 @@ public class UserProfileRequest {
     private String address;
 
     @Size(max = 10, message = "Birth date must be in the format YYYY-MM-DD")
-    private String birthDate;
+    private Date birthDate;
+    private UserProfileResponse user;
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class UserIdResponse {
+        private Long id;
+    }
 }

@@ -3,7 +3,7 @@ package com.owsm.AuthService.controller;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.dto.VerifyOtpRequest;
-import com.owsm.AuthService.exception.OwsmException;
+import com.owsm.AuthService.exception.OwsmException     ;
 import com.owsm.AuthService.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

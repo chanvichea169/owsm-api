@@ -1,5 +1,6 @@
 package com.owsm.AuthService.service.handler;
 
+import com.owsm.AuthService.dto.RoleResponse;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.model.Role;
@@ -58,15 +59,35 @@ public class UserServiceHandler {
 
     public UserResponse convertToUserResponse(User user) {
         UserResponse userResponse = new UserResponse();
+
         userResponse.setId(user.getId());
         userResponse.setUsername(user.getUsername());
         userResponse.setEmail(user.getEmail());
-        if (user.getRole() != null) {
-            userResponse.setRole(user.getRole().getName().name());
-        }
         userResponse.setEnabled(user.isEnabled());
-        userResponse.setCreatedAt(java.util.Date.from(user.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()));
-        userResponse.setUpdatedAt(java.util.Date.from(user.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()));
+
+        // Handle the nested Role object
+        if (user.getRole() != null) {
+            RoleResponse roleResponse = new RoleResponse();
+            roleResponse.setId(user.getRole().getId());
+            roleResponse.setName(String.valueOf(user.getRole().getName()));
+
+            // Pass the object itself, not a String representation
+            userResponse.setRole(roleResponse);
+        }
+
+        // Modern Date Conversion
+        if (user.getCreatedAt() != null) {
+            userResponse.setCreatedAt(java.util.Date.from(
+                    user.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
+            ));
+        }
+
+        if (user.getUpdatedAt() != null) {
+            userResponse.setUpdatedAt(java.util.Date.from(
+                    user.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
+            ));
+        }
+
         return userResponse;
     }
 }

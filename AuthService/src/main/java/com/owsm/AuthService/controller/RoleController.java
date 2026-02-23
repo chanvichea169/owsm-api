@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/roles")
-@CrossOrigin
 public class RoleController {
     private final RoleService roleService;
     @PostMapping
@@ -32,7 +31,7 @@ public class RoleController {
     }
     @GetMapping
     public ResponseEntity<?> getAllRoles() {
-        return ResponseEntity.ok(roleService.getAllUsers());
+        return ResponseEntity.ok(roleService.getAllRoles());
     }
     @PutMapping("/{id}")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody RoleRequest roleRequest) {

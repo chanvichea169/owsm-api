@@ -12,5 +12,5 @@ public interface RoleService {
         RoleRequest geRoleById(Long id);
         RoleRequest updateRole(Long id, RoleRequest roleRequest);
         void deleteRole(Long id);
-        List<RoleResponse> getAllUsers();
+        List<RoleResponse> getAllRoles();
 }

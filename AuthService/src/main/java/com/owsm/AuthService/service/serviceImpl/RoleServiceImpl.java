@@ -52,7 +52,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<RoleResponse> getAllUsers() {
+    public List<RoleResponse> getAllRoles() {
         return roleRepository.findAll()
                 .stream()
                 .map(roleServiceHandler::convertToRoleResponse)

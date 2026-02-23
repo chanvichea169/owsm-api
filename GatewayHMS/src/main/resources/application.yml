@@ -11,7 +11,8 @@ spring:
         - id: AuthService
           uri: http://localhost:8081
           predicates:
-            - Path=/api/users/**
+            - Path=/api/users/**,/api/roles/**
+
         - id: NewsService
           uri: http://localhost:8082
           predicates:

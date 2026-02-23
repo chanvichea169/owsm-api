@@ -1,0 +1,20 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: GatewayOWSM
+
+  cloud:
+    gateway:
+      routes:
+        - id: AuthService
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**
+        - id: NewsService
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/news/**
+      default-filters:
+        - DedupedResponseHeader=Access-Control-Allow-Origin RETAIN_UNIQUE

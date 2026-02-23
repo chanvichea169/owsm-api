@@ -1,4 +1,4 @@
-package com.hms.GatewayHMS.config;
+package com.hms.GatewayOWSM.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

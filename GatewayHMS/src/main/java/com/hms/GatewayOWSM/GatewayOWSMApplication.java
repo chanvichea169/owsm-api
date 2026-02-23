@@ -1,13 +1,13 @@
-package com.hms.GatewayHMS;
+package com.hms.GatewayOWSM;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class GatewayHmsApplication {
+public class GatewayOWSMApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GatewayHmsApplication.class, args);
+		SpringApplication.run(GatewayOWSMApplication.class, args);
 	}
 
 }

@@ -25,8 +25,6 @@ public class NewsServiceImpl implements NewsService {
     public NewsResponse publish(Long id) {
         News news = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("News not found"));
-
-        news.setStatus(NewsStatus.PUBLISHED);
         news.setPublishedAt(LocalDateTime.now());
 
         repository.save(news);
@@ -65,10 +63,7 @@ public class NewsServiceImpl implements NewsService {
                 .title(news.getTitle())
                 .slug(news.getSlug())
                 .content(news.getContent())
-                .category(news.getCategory())
                 .coverImage(news.getCoverImage())
-                .author(news.getAuthor())
-                .status(news.getStatus().name())
                 .isFeatured(news.getIsFeatured())
                 .viewCount(news.getViewCount())
                 .publishedAt(news.getPublishedAt())

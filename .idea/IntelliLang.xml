@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="LanguageInjectionConfiguration">
+    <injection language="GitIgnore" injector-id="java">
+      <display-name>Table.name (jakarta.persistence)</display-name>
+      <single-file value="false" />
+      <place><![CDATA[psiMethod().withName("name").withParameters().definedInClass("jakarta.persistence.Table")]]></place>
+    </injection>
+  </component>
+</project>

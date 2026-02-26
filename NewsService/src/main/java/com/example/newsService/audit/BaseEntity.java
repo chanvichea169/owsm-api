@@ -1,4 +1,4 @@
-package com.example.newsservice.audit;
+package com.example.newsService.audit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

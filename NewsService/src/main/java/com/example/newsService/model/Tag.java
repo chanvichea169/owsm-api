@@ -7,7 +7,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "tbl_tags")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

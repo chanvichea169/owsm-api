@@ -3,13 +3,12 @@ package com.example.newsService.model;
 import com.example.newsService.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "tbl_categories")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

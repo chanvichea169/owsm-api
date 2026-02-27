@@ -4,11 +4,10 @@ import com.example.newsService.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "authors")
-@Data
+@Table(name = "tbl_authors")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

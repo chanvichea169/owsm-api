@@ -3,13 +3,13 @@ package com.example.newsService.model;
 import com.example.newsService.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "tbl_news")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,7 +33,7 @@ public class News extends BaseEntity {
 
     @ManyToMany
     @JoinTable(
-            name = "news_tags",
+            name = "tbl_news_tags",
             joinColumns = @JoinColumn(name = "news_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )

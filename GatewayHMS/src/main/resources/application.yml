@@ -16,6 +16,6 @@ spring:
         - id: NewsService
           uri: http://localhost:8082
           predicates:
-            - Path=/api/news/**
+            - Path=/api/news/**,/api/categories/**,/api/comments/**,/api/Tags/**,/api/authors/**,/api/media-assets/**
       default-filters:
         - DedupedResponseHeader=Access-Control-Allow-Origin RETAIN_UNIQUE

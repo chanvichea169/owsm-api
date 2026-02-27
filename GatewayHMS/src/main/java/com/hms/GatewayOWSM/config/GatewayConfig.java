@@ -15,6 +15,10 @@ public class GatewayConfig {
                         .path("/api/users/**", "/api/roles/**")
                         .uri("http://localhost:8081")
                 )
+                .route("news-service", r -> r
+                        .path("/api/news/**", "/api/comments/**", "/api/media-assets/**", "/api/categories/**", "/api/tags/**", "/api/authors/**")
+                        .uri("http://localhost:8082")
+                )
                 .build();
     }
 }

@@ -7,7 +7,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "tbl_media_assets")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -3,6 +3,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
 @Data
 @Builder
 public class NewsRequest {
@@ -18,4 +21,7 @@ public class NewsRequest {
 
     private String coverImage;
     private String author;
+    private Boolean isFeatured;
+    private LocalDateTime publishedAt;
+    private LocalDateTime createdAt;
 }

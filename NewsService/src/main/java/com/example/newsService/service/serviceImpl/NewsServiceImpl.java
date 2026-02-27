@@ -18,7 +18,15 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public NewsResponse create(NewsRequest request) {
-        return null;
+        return map(repository.save(News.builder()
+                .title(request.getTitle())
+                .slug(generateSlug(request.getTitle()))
+                .content(request.getContent())
+                .coverImage(request.getCoverImage())
+                .isFeatured(request.getIsFeatured())
+                .viewCount(0L)
+                .status(String.valueOf(NewsStatus.DRAFT))
+                .build()));
     }
 
     @Override

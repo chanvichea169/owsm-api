@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register","/api/roles/**", "/api/users/login", "/api/users/verify-otp", "/api/users/resend-otp","/api/profile/**").permitAll()
-                        .requestMatchers("/api/users/**", "/api/roles/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/users/**", "/api/roles/**", "/api/news/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

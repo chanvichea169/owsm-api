@@ -30,7 +30,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 requestURI.startsWith("/api/users/login") ||
                 requestURI.startsWith("/api/users/verify-otp") ||
                 requestURI.startsWith("/api/users/resend-otp") ||
-                requestURI.startsWith("/api/roles")) {
+                requestURI.startsWith("/api/roles") ||
+                requestURI.startsWith("/api/news") ||
+                requestURI.startsWith("/api/comments")) {
 
             chain.doFilter(request, response);
             return;

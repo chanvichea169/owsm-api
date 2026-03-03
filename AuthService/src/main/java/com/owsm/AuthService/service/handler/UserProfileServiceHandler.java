@@ -6,9 +6,13 @@ import com.owsm.AuthService.model.UserProfile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Slf4j
 public class UserProfileServiceHandler {
+    private static final String BASE_IMAGE_URL = "http://localhost:9001/uploads/";
+
     public UserProfileResponse convertToResponse(UserProfile entity) {
         if (entity == null) return null;
 
@@ -17,16 +21,24 @@ public class UserProfileServiceHandler {
         response.setFirstName(entity.getFirstName());
         response.setLastName(entity.getLastName());
         response.setPhoneNumber(entity.getPhoneNumber());
-        response.setAvatarUrl(entity.getAvatarUrl());
+
+        if (entity.getAvatarUrl() != null && !entity.getAvatarUrl().isBlank()) {
+            response.setAvatarUrl(BASE_IMAGE_URL + entity.getAvatarUrl());
+        }
+
         response.setBio(entity.getBio());
         response.setAddress(entity.getAddress());
         response.setBirthDate(entity.getBirthDate());
+
         if (entity.getUser() != null) {
-            response.setUser(new UserProfileResponse.UserInnerResponse(entity.getUser().getId()));
+            response.setUser(
+                    new UserProfileResponse.UserInnerResponse(entity.getUser().getId())
+            );
         }
 
         return response;
     }
+
     public UserProfile convertToEntity(UserProfileRequest response) {
         UserProfile entity = new UserProfile();
         entity.setFirstName(response.getFirstName());
@@ -37,5 +49,11 @@ public class UserProfileServiceHandler {
         entity.setBio(response.getBio());
         entity.setBirthDate(response.getBirthDate());
         return entity;
+    }
+
+    public List<UserProfileResponse> convertToResponseList(List<UserProfile> entities) {
+        return entities.stream()
+                .map(this::convertToResponse)
+                .toList();
     }
 }

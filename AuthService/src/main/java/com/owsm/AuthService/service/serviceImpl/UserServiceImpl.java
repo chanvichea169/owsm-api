@@ -1,6 +1,6 @@
 package com.owsm.AuthService.service.serviceImpl;
 
-import com.owsm.AuthService.Api.JwtUtil;
+import com.owsm.AuthService.api.JwtUtil;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.exception.OwsmException;

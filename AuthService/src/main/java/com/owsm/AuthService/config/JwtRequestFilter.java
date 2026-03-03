@@ -1,6 +1,6 @@
 package com.owsm.AuthService.config;
 
-import com.owsm.AuthService.Api.JwtUtil;
+import com.owsm.AuthService.api.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,9 +30,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 requestURI.startsWith("/api/users/login") ||
                 requestURI.startsWith("/api/users/verify-otp") ||
                 requestURI.startsWith("/api/users/resend-otp") ||
+                requestURI.startsWith("/api/profile") ||
                 requestURI.startsWith("/api/roles") ||
                 requestURI.startsWith("/api/news") ||
-                requestURI.startsWith("/api/comments")) {
+                requestURI.startsWith("/api/comments") ||
+                requestURI.startsWith("/uploads")){
 
             chain.doFilter(request, response);
             return;
@@ -63,4 +65,3 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
-

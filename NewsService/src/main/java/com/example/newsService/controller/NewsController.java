@@ -14,18 +14,33 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NewsController {
     private final NewsService newsService;
+
     @PostMapping
-    public NewsResponse create(@Validated @RequestBody NewsRequest request){
+    public NewsResponse create(@Validated @RequestBody NewsRequest request) {
         return newsService.create(request);
     }
 
     @GetMapping("/{id}")
-    public NewsResponse get(@PathVariable Long id){
+    public NewsResponse get(@PathVariable Long id) {
         return newsService.getById(id);
     }
 
     @GetMapping
-    public List<NewsResponse> all(){
+    public List<NewsResponse> all() {
         return newsService.getAll();
+    }
+
+    @PutMapping("/{id}/publish")
+    public NewsResponse publish(@PathVariable Long id) {
+        return newsService.publish(id);
+    }
+
+    @PutMapping("/{id}")
+    public NewsResponse update(@PathVariable Long id, @Validated @RequestBody NewsRequest request) {
+        return newsService.update(id, request);
+    }
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        newsService.delete(id);
     }
 }

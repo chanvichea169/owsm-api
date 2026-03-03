@@ -12,6 +12,8 @@ public interface NewsService {
 
     NewsResponse publish(Long id);
 
+    NewsResponse update(Long id, NewsRequest request);
+
     NewsResponse getById(Long id);
 
     List<NewsResponse> getAll();

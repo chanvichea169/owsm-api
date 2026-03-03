@@ -1,4 +1,4 @@
-package com.owsm.AuthService.Api;
+package com.owsm.AuthService.api;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -2,9 +2,9 @@ package com.example.newsService.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @Builder
@@ -23,5 +23,7 @@ public class NewsRequest {
     private String author;
     private Boolean isFeatured;
     private LocalDateTime publishedAt;
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

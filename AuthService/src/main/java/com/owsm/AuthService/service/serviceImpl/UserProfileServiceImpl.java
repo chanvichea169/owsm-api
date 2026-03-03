@@ -9,6 +9,8 @@ import com.owsm.AuthService.service.handler.UserProfileServiceHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserProfileServiceImpl implements UserProfileService {
 
@@ -24,10 +26,24 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
         return handler.convertToResponse(entity);
     }
+
+    @Override
+    public UserProfileResponse getProfileByUserId(Long userId) {
+        UserProfile entity = repository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Profile not found for user id: " + userId));
+        return handler.convertToResponse(entity);
+    }
+
     @Override
     public UserProfileResponse createProfile(UserProfileRequest profile) {
         UserProfile entity = handler.convertToEntity(profile);
         UserProfile savedProfile = repository.save(entity);
         return handler.convertToResponse(savedProfile);
+    }
+
+    @Override
+    public List<UserProfileResponse> getAll() {
+        List<UserProfile> entities = repository.findAll();
+        return handler.convertToResponseList(entities);
     }
 }

@@ -12,7 +12,7 @@ public class GatewayConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("auth-service", r -> r
-                        .path("/api/users/**", "/api/roles/**")
+                        .path("/api/users/**", "/api/roles/**", "/api/profile/**", "/uploads/**")
                         .uri("http://localhost:8081")
                 )
                 .route("news-service", r -> r

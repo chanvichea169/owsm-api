@@ -21,4 +21,5 @@ public class NewsResponse {
     private Long viewCount;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

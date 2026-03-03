@@ -18,15 +18,17 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public NewsResponse create(NewsRequest request) {
-        return map(repository.save(News.builder()
+        News news = News.builder()
                 .title(request.getTitle())
                 .slug(generateSlug(request.getTitle()))
                 .content(request.getContent())
                 .coverImage(request.getCoverImage())
                 .isFeatured(request.getIsFeatured())
                 .viewCount(0L)
-                .status(String.valueOf(NewsStatus.DRAFT))
-                .build()));
+                .status(NewsStatus.DRAFT.name())
+                .build();
+
+        return map(repository.save(news));
     }
 
     @Override
@@ -38,6 +40,20 @@ public class NewsServiceImpl implements NewsService {
         repository.save(news);
 
         return map(news);
+    }
+
+    @Override
+    public NewsResponse update(Long id, NewsRequest request) {
+        return repository.findById(id)
+                .map(news -> {
+                    news.setTitle(request.getTitle());
+                    news.setSlug(generateSlug(request.getTitle()));
+                    news.setContent(request.getContent());
+                    news.setCoverImage(request.getCoverImage());
+                    news.setIsFeatured(request.getIsFeatured());
+                    return map(repository.save(news));
+                })
+                .orElseThrow(() -> new RuntimeException("News not found"));
     }
 
     @Override

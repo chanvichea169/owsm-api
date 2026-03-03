@@ -48,7 +48,6 @@ public class SecurityConfig {
                                 "/api/profile/**",
                                 "/uploads/**"
                         ).permitAll()
-                        // Admin-only endpoints
                         .requestMatchers(
                                 "/api/users/**",
                                 "/api/roles/**",

@@ -6,12 +6,15 @@ import com.owsm.AuthService.model.UserProfile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 @Service
 @Slf4j
 public class UserProfileServiceHandler {
-    private static final String BASE_IMAGE_URL = "http://localhost:9001/uploads/";
+
+    private static final String BASE_IMAGE_URL = "http://localhost:9001/uploads/profiles/";
 
     public UserProfileResponse convertToResponse(UserProfile entity) {
         if (entity == null) return null;
@@ -38,16 +41,19 @@ public class UserProfileServiceHandler {
 
         return response;
     }
-
-    public UserProfile convertToEntity(UserProfileRequest response) {
+    public UserProfile convertToEntity(UserProfileRequest request) {
         UserProfile entity = new UserProfile();
-        entity.setFirstName(response.getFirstName());
-        entity.setLastName(response.getLastName());
-        entity.setPhoneNumber(response.getPhoneNumber());
-        entity.setAddress(response.getAddress());
-        entity.setAvatarUrl(response.getAvatarUrl());
-        entity.setBio(response.getBio());
-        entity.setBirthDate(response.getBirthDate());
+        entity.setFirstName(request.getFirstName());
+        entity.setLastName(request.getLastName());
+        entity.setPhoneNumber(request.getPhoneNumber());
+        entity.setAddress(request.getAddress());
+        entity.setBio(request.getBio());
+        if (request.getBirthDate() != null) {
+            entity.setBirthDate(
+                    Date.from(request.getBirthDate().atStartOfDay(ZoneId.systemDefault()).toInstant())
+            );
+        }
+
         return entity;
     }
 

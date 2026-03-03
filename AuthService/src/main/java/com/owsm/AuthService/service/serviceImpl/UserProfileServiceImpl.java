@@ -2,14 +2,26 @@ package com.owsm.AuthService.service.serviceImpl;
 
 import com.owsm.AuthService.dto.UserProfileRequest;
 import com.owsm.AuthService.dto.UserProfileResponse;
+import com.owsm.AuthService.model.User;
 import com.owsm.AuthService.model.UserProfile;
+import com.owsm.AuthService.repository.UserRepository;
 import com.owsm.AuthService.repository.UserProfileRepository;
 import com.owsm.AuthService.service.UserProfileService;
 import com.owsm.AuthService.service.handler.UserProfileServiceHandler;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserProfileServiceImpl implements UserProfileService {
@@ -19,6 +31,12 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Autowired
     private UserProfileServiceHandler handler;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
 
     @Override
     public UserProfileResponse getProfileById(Long id) {
@@ -35,12 +53,49 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    public UserProfileResponse createProfile(UserProfileRequest profile) {
+    public UserProfileResponse createProfile(UserProfileRequest profile, MultipartFile avatar) {
         UserProfile entity = handler.convertToEntity(profile);
+        Long userId = extractUserId(profile);
+
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found for id: " + userId));
+            entity.setUser(user);
+        }
+
+        if (avatar != null && !avatar.isEmpty()) {
+            try {
+                String originalName = avatar.getOriginalFilename() == null
+                        ? "avatar"
+                        : Paths.get(avatar.getOriginalFilename()).getFileName().toString();
+                String fileName = UUID.randomUUID() + "_" + originalName;
+                Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+                if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+                Files.copy(avatar.getInputStream(), uploadPath.resolve(fileName),
+                        StandardCopyOption.REPLACE_EXISTING);
+
+                entity.setAvatarUrl(fileName);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to store avatar image", e);
+            }
+        }
+
         UserProfile savedProfile = repository.save(entity);
         return handler.convertToResponse(savedProfile);
     }
 
+    private Long extractUserId(UserProfileRequest profile) {
+        if (profile.getUserId() != null) {
+            return profile.getUserId();
+        }
+
+        if (profile.getUser() != null) {
+            return profile.getUser().getId();
+        }
+
+        return null;
+    }
     @Override
     public List<UserProfileResponse> getAll() {
         List<UserProfile> entities = repository.findAll();

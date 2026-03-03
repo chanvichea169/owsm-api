@@ -2,6 +2,7 @@ package com.example.newsService.service.serviceImpl;
 
 import com.example.newsService.dto.*;
 import com.example.newsService.enumeration.NewsStatus;
+import com.example.newsService.exception.ResourceNotFoundException;
 import com.example.newsService.model.*;
 import com.example.newsService.repository.NewsRepository;
 import com.example.newsService.service.NewsService;
@@ -34,7 +35,8 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public NewsResponse publish(Long id) {
         News news = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("News not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("News not found"));
+        news.setStatus(NewsStatus.PUBLISHED.name());
         news.setPublishedAt(LocalDateTime.now());
 
         repository.save(news);
@@ -53,13 +55,13 @@ public class NewsServiceImpl implements NewsService {
                     news.setIsFeatured(request.getIsFeatured());
                     return map(repository.save(news));
                 })
-                .orElseThrow(() -> new RuntimeException("News not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("News not found"));
     }
 
     @Override
     public NewsResponse getById(Long id) {
         return map(repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("News not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("News not found")));
     }
 
     @Override
@@ -72,6 +74,9 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("News not found");
+        }
         repository.deleteById(id);
     }
 
@@ -88,6 +93,7 @@ public class NewsServiceImpl implements NewsService {
                 .slug(news.getSlug())
                 .content(news.getContent())
                 .coverImage(news.getCoverImage())
+                .status(news.getStatus())
                 .isFeatured(news.getIsFeatured())
                 .viewCount(news.getViewCount())
                 .publishedAt(news.getPublishedAt())

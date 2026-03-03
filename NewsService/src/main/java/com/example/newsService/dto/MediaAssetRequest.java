@@ -20,4 +20,7 @@ public class MediaAssetRequest {
     private String fileType;
 
     private Long fileSize;
+
+    @NotBlank(message = "Category is required")
+    private String category;
 }

@@ -23,9 +23,17 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
 
 server:
   port: 8082
+
+app:
+  file:
+    upload-dir: uploads
 
 logging:
   level:
@@ -36,4 +44,3 @@ logging:
           descriptor:
             sql:
               BasicBinder: TRACE
-

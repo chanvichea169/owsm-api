@@ -15,6 +15,9 @@ public class MediaAssetResponse {
     private String fileUrl;
     private String fileType;
     private Long fileSize;
+    private String category;
+    private String originalFileName;
+    private String storedFileName;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

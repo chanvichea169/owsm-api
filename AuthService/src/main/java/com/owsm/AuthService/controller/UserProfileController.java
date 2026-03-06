@@ -79,4 +79,31 @@ public class UserProfileController {
     public ResponseEntity<UserProfileResponse> getProfileByUserId(@RequestParam Long userId) {
         return ResponseEntity.ok(profileService.getProfileByUserId(userId));
     }
+
+    @PutMapping(
+            value = "/{id}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @PathVariable Long id,
+            @ModelAttribute UserProfileRequest formRequest,
+            @RequestPart(value = "request", required = false) UserProfileRequest requestPart,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart(value = "avatarUrl", required = false) MultipartFile avatarUrlFile,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            MultipartHttpServletRequest multipartRequest
+    ) {
+        UserProfileRequest request = requestPart != null ? requestPart : formRequest;
+        MultipartFile profileImage = resolveProfileImage(
+                avatar, file, avatarUrlFile, image, multipartRequest
+        );
+
+        if (request == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "Profile request payload is required");
+        }
+
+        UserProfileResponse response = profileService.updateProfile(id, request, profileImage);
+        return ResponseEntity.ok(response);
+    }
 }

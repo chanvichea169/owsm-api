@@ -20,4 +20,5 @@ public interface UserProfileService {
 
     List<UserProfileResponse> getAll();
 
+    UserProfileResponse updateProfile(Long id, UserProfileRequest request, MultipartFile profileImage);
 }

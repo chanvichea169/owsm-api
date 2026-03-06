@@ -41,7 +41,6 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsService userDetailsService;
     private final RoleRepository roleRepository;
 
-    // ================= REGISTER =================
 
     @Override
     public UserResponse registerUser(UserRequest request) throws OwsmException {
@@ -168,27 +167,24 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
-        userServiceHandler.validateUsername(request.getUsername());
-        userServiceHandler.validateEmail(request.getEmail());
-
-        if (!user.getEmail().equals(request.getEmail())
-                && userRepository.existsByEmail(request.getEmail())) {
-            throw new OwsmException("EMAIL_ALREADY_EXISTS");
+        if (request.getUsername() != null && !request.getUsername().isBlank()) {
+            if (!user.getUsername().equals(request.getUsername())
+                    && userRepository.existsByUsername(request.getUsername())) {
+                throw new OwsmException("USERNAME_ALREADY_EXISTS");
+            }
+            user.setUsername(request.getUsername());
         }
 
-        if (!user.getUsername().equals(request.getUsername())
-                && userRepository.existsByUsername(request.getUsername())) {
-            throw new OwsmException("USERNAME_ALREADY_EXISTS");
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (!user.getEmail().equals(request.getEmail())
+                    && userRepository.existsByEmail(request.getEmail())) {
+                throw new OwsmException("EMAIL_ALREADY_EXISTS");
+            }
+            user.setEmail(request.getEmail());
         }
 
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-
-        if (request.getPassword() != null
-                && !request.getPassword().isBlank()) {
-            user.setPassword(
-                    passwordEncoder.encode(request.getPassword())
-            );
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         if (request.getRoleId() != null) {
@@ -203,7 +199,6 @@ public class UserServiceImpl implements UserService {
 
         return userServiceHandler.convertToUserResponse(user);
     }
-
     // ================= DELETE =================
 
     @Override

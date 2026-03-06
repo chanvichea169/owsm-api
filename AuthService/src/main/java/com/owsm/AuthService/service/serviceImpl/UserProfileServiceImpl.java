@@ -101,4 +101,42 @@ public class UserProfileServiceImpl implements UserProfileService {
         List<UserProfile> entities = repository.findAll();
         return handler.convertToResponseList(entities);
     }
+
+    @Override
+    public UserProfileResponse updateProfile(Long id, UserProfileRequest request, MultipartFile profileImage) {
+        UserProfile existingProfile = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+        existingProfile.setFirstName(request.getFirstName());
+        existingProfile.setLastName(request.getLastName());
+        existingProfile.setPhoneNumber(request.getPhoneNumber());
+        existingProfile.setAddress(request.getAddress());
+        existingProfile.setBio(request.getBio());
+        if (request.getBirthDate() != null) {
+            existingProfile.setBirthDate(
+                    Date.from(request.getBirthDate().atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant())
+            );
+        }
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                String originalName = profileImage.getOriginalFilename() == null
+                        ? "avatar"
+                        : Paths.get(profileImage.getOriginalFilename()).getFileName().toString();
+                String fileName = UUID.randomUUID() + "_" + originalName;
+                Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+                if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+                Files.copy(profileImage.getInputStream(), uploadPath.resolve(fileName),
+                        StandardCopyOption.REPLACE_EXISTING);
+
+                existingProfile.setAvatarUrl(fileName);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to store profile image", e);
+            }
+        }
+
+        UserProfile updatedProfile = repository.save(existingProfile);
+        return handler.convertToResponse(updatedProfile);
+    }
 }

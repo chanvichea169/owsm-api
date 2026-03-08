@@ -1,0 +1,126 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./AuthService
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_PROFILES_ACTIVE: docker
+    restart: always
+
+  attendance-service:
+    build: ./AttendanceService
+    container_name: attendance-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/attendance_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_PROFILES_ACTIVE: docker
+    restart: always
+
+  news-service:
+    build: ./NewsService
+    container_name: news-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/news_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_PROFILES_ACTIVE: docker
+    restart: always
+
+  gateway-service:
+    build: "./GatewayOWSM"
+    container_name: gateway-service
+    ports:
+      - "9001:9001"
+    depends_on:
+      - auth-service
+      - attendance-service
+      - news-service
+    environment:
+      SERVER_PORT: 9001
+      SPRING_APPLICATION_NAME: GatewayOWSM
+
+      # AuthService routes
+      SPRING_CLOUD_GATEWAY_ROUTES_0_ID: AuthService
+      SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://auth-service:8081
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: Path=/api/users/**
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_1: Path=/api/roles/**
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_2: Path=/api/profile/**
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_3: Path=/api/auth/**
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_4: Path=/api/permissions/**
+
+      # AttendanceService routes
+      SPRING_CLOUD_GATEWAY_ROUTES_1_ID: AttendanceService
+      SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://attendance-service:8083
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: Path=/api/attendance/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_1: Path=/api/departments/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_2: Path=/api/offices/**
+
+      # NewsService routes
+      SPRING_CLOUD_GATEWAY_ROUTES_2_ID: NewsService
+      SPRING_CLOUD_GATEWAY_ROUTES_2_URI: http://news-service:8082
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: Path=/api/news/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_1: Path=/api/categories/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_2: Path=/api/comments/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_3: Path=/api/tags/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_4: Path=/api/authors/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_5: Path=/api/media-assets/**
+
+      SPRING_CLOUD_GATEWAY_DEFAULT_FILTERS_0: DedupedResponseHeader=Access-Control-Allow-Origin RETAIN_UNIQUE
+    restart: always
+
+  frontend:
+    build:
+      context: ../FRONTEND/owsm-admin
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway-service
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ../FRONTEND/owsm-admin:/app
+      - /app/node_modules
+    restart: always
+
+volumes:
+  postgres-data:

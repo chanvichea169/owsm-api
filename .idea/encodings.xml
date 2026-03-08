@@ -3,9 +3,11 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/AuthService/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/AuthService/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/GatewayHMS/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/GatewayHMS/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/GatewayOWSM/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/GatewayOWSM/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/NewsService/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/NewsService/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/attendanceService/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/attendanceService/src/main/resources" charset="UTF-8" />
   </component>
 </project>

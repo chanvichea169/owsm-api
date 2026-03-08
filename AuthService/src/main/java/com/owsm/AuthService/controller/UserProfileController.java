@@ -35,7 +35,7 @@ public class UserProfileController {
             @RequestPart(value = "image", required = false) MultipartFile image,
             MultipartHttpServletRequest multipartRequest
     ) {
-        UserProfileRequest request = requestPart != null ? requestPart : formRequest;
+        UserProfileRequest request = requestPart != null ? formRequest : formRequest;
         MultipartFile profileImage = resolveProfileImage(
                 avatar, file, avatarUrlFile, image, multipartRequest
         );

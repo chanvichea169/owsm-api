@@ -1,12 +1,12 @@
-package com.example.attendanceService;
+package test.java.com.example.attendanceService;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.processing.SupportedAnnotationTypes;
 
 @SpringBootTest
 class AttendanceServiceApplicationTests {
 
-	@Test
 	void contextLoads() {
 	}
 

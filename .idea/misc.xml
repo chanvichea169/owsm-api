@@ -7,10 +7,12 @@
         <option value="$PROJECT_DIR$/GatewayHMS/pom.xml" />
         <option value="$PROJECT_DIR$/AuthService/pom.xml" />
         <option value="$PROJECT_DIR$/NewsService/pom.xml" />
+        <option value="$PROJECT_DIR$/attendanceService/pom.xml" />
+        <option value="$PROJECT_DIR$/GatewayOWSM/pom.xml" />
       </list>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_X" default="true" project-jdk-name="21" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/out" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_X" default="true" project-jdk-name="24" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/attendanceService" />
   </component>
 </project>

@@ -53,7 +53,7 @@ public class SecurityConfig {
                                 "/api/roles/**",
                                 "/api/news/**",
                                 "/api/profile/**"
-                        ).hasAuthority("ADMIN")
+                        ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -50,6 +50,12 @@ Examples:
 }
 ```
 
+## Frontend Preview
+
+- **View all news** - send `GET http://localhost:8082/api/v1/news` and use the `data` array inside the shared success response to populate cards, tables, etc. Each item mirrors `NewsResponse` fields (`id`, `slug`, `title`, `content`, `category`, `coverImage`, `author`, `status`, `isFeatured`, `viewCount`, `publishedAt`, `createdAt`, `updatedAt`).
+- **Swagger UI** - open `http://localhost:8082/swagger-ui/index.html` after the app starts to explore request/response samples, test `view all` and other routes, and copy the exact payloads the backend expects.
+- **Filtering guidance** - combine query strings when needed (`/media-assets?newsId=123&category=technology`) and reuse `/news/{id}` responses to resolve relational data (media assets reference `newsId`).
+
 ## Implemented Resources
 
 ## 1) News

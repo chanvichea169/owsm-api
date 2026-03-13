@@ -30,6 +30,7 @@ com\example\newsService\dto\NewsResponse.class
 com\example\newsService\dto\ApiResponse$ApiResponseBuilder.class
 com\example\newsService\audit\BaseEntity.class
 com\example\newsService\repository\CommentRepository.class
+com\example\newsService\config\OpenApiConfig.class
 com\example\newsService\dto\CategoryResponse$CategoryResponseBuilder.class
 com\example\newsService\repository\TagRepository.class
 com\example\newsService\controller\NewsController.class

@@ -20,6 +20,9 @@ public class Role extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(length = 20, unique = true, nullable = false)
     private RoleName name;
+
+    @Column(length = 255, nullable = true)
+    private String description;
 }

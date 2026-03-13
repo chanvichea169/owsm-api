@@ -3,8 +3,11 @@ package com.example.newsService.controller;
 import com.example.newsService.dto.ApiResponse;
 import com.example.newsService.dto.NewsRequest;
 import com.example.newsService.dto.NewsResponse;
-import jakarta.validation.Valid;
 import com.example.newsService.service.NewsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping({"/api/v1/news", "/api/news"})
 @RequiredArgsConstructor
+@Tag(name = "News", description = "Operations related to news lifecycle")
 public class NewsController {
     private final NewsService newsService;
 
@@ -31,6 +35,11 @@ public class NewsController {
     }
 
     @GetMapping
+    @Operation(summary = "View all news items", description = "Retrieve every news entry stored in the system.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "News list fetched successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Unexpected server error")
+    })
     public ResponseEntity<ApiResponse<List<NewsResponse>>> all() {
         return ResponseEntity.ok(buildResponse("News list fetched successfully", newsService.getAll()));
     }

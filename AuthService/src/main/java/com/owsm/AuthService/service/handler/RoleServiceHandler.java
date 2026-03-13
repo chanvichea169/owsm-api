@@ -25,6 +25,7 @@ public class RoleServiceHandler {
         RoleRequest roleRequest = new RoleRequest();
         roleRequest.setId(savedRole.getId());
         roleRequest.setName(savedRole.getName().name());
+        roleRequest.setDescription(savedRole.getDescription());
         return roleRequest;
     }
 
@@ -32,6 +33,7 @@ public class RoleServiceHandler {
         RoleResponse roleResponse = new RoleResponse();
         roleResponse.setId(role.getId());
         roleResponse.setName(role.getName().name());
+        roleResponse.setDescription(role.getDescription());
         return roleResponse;
     }
 }

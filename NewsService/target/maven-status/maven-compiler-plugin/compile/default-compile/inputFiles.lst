@@ -1,4 +1,5 @@
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\audit\BaseEntity.java
+D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\config\OpenApiConfig.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\CategoryRequest.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\model\Tag.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\repository\CommentRepository.java

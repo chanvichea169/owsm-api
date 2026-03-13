@@ -4,8 +4,6 @@ import com.owsm.AuthService.common.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
-
 @Setter
 @Getter
 @NoArgsConstructor

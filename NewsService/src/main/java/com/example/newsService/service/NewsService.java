@@ -1,6 +1,8 @@
 package com.example.newsService.service;
 import com.example.newsService.dto.NewsRequest;
 import com.example.newsService.dto.NewsResponse;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 public interface NewsService {
 
@@ -15,4 +17,6 @@ public interface NewsService {
     List<NewsResponse> getAll();
 
     void delete(Long id);
+
+    String uploadFile(MultipartFile file);
 }

@@ -19,6 +19,8 @@ public interface MediaAssetService {
     List<MediaAssetResponse> getByCategory(String category);
     List<MediaAssetResponse> getByNewsAndCategory(Long newsId, String category);
     MediaAssetResponse upload(Long newsId, String category, MultipartFile file);
+    MediaAssetResponse uploadNewsImage(Long newsId, String category, MultipartFile file);
+    List<MediaAssetResponse> uploadPhotos(Long newsId, String category, List<MultipartFile> files);
 
     void delete(Long id);
 }

@@ -34,6 +34,7 @@ server:
 app:
   file:
     upload-dir: uploads
+    news-dir: upload/news
 
 logging:
   level:

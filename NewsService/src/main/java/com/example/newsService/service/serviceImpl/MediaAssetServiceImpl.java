@@ -52,6 +52,16 @@ public class MediaAssetServiceImpl implements MediaAssetService {
     }
 
     @Override
+    public MediaAssetResponse uploadNewsImage(Long newsId, String category, MultipartFile file) {
+        return handler.uploadNewsImage(newsId, category, file);
+    }
+
+    @Override
+    public List<MediaAssetResponse> uploadPhotos(Long newsId, String category, List<MultipartFile> files) {
+        return handler.uploadPhotos(newsId, category, files);
+    }
+
+    @Override
     public void delete(Long id) {
         handler.delete(id);
     }

@@ -36,6 +36,24 @@ public class MediaAssetController {
                 .body(buildResponse("Media asset uploaded successfully", response));
     }
 
+    @PostMapping(value = "/upload/news", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<MediaAssetResponse>> uploadNewsImage(@RequestParam Long newsId,
+                                                                           @RequestParam String category,
+                                                                           @RequestPart MultipartFile file) {
+        MediaAssetResponse response = mediaAssetService.uploadNewsImage(newsId, category, file);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(buildResponse("News image uploaded successfully", response));
+    }
+
+    @PostMapping(value = "/upload/photos", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<List<MediaAssetResponse>>> uploadPhotos(@RequestParam Long newsId,
+                                                                              @RequestParam String category,
+                                                                              @RequestPart("files") List<MultipartFile> files) {
+        List<MediaAssetResponse> response = mediaAssetService.uploadPhotos(newsId, category, files);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(buildResponse("Photos uploaded successfully", response));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<MediaAssetResponse>> update(@PathVariable Long id,
                                                                   @Valid @RequestBody MediaAssetRequest request) {

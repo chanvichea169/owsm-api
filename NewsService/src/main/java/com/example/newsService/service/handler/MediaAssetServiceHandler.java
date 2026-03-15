@@ -36,6 +36,9 @@ public class MediaAssetServiceHandler {
     @Value("${app.file.upload-dir:uploads}")
     private String uploadDir;
 
+    @Value("${app.file.news-dir:upload/news}")
+    private String newsUploadDir;
+
     public MediaAssetResponse create(MediaAssetRequest request) {
         News news = newsRepository.findById(request.getNewsId())
                 .orElseThrow(() -> new ResourceNotFoundException("News not found"));
@@ -93,30 +96,47 @@ public class MediaAssetServiceHandler {
     }
 
     public MediaAssetResponse upload(Long newsId, String category, MultipartFile file) {
-        News news = newsRepository.findById(newsId)
-                .orElseThrow(() -> new ResourceNotFoundException("News not found"));
+        News news = resolveNews(newsId);
+        return storeMediaAsset(news, category, file, Paths.get(uploadDir));
+    }
 
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File is required");
-        }
-        if (category == null || category.isBlank()) {
-            throw new IllegalArgumentException("Category is required");
-        }
+    public MediaAssetResponse uploadNewsImage(Long newsId, String category, MultipartFile file) {
+        News news = resolveNews(newsId);
+        return storeMediaAsset(news, category, file, Paths.get(newsUploadDir));
+    }
 
+    public List<MediaAssetResponse> uploadPhotos(Long newsId, String category, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("At least one photo is required");
+        }
+        News news = resolveNews(newsId);
+        Path uploadPath = Paths.get(uploadDir);
+        return files.stream()
+                .map(file -> storeMediaAsset(news, category, file, uploadPath))
+                .collect(Collectors.toList());
+    }
+
+    public void delete(Long id) {
+        if (!mediaAssetRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Media asset not found");
+        }
+        mediaAssetRepository.deleteById(id);
+    }
+
+    private MediaAssetResponse storeMediaAsset(News news, String category, MultipartFile file, Path directory) {
+        validateCategory(category);
+        validateFile(file);
         String originalName = Paths.get(file.getOriginalFilename() == null ? "file" : file.getOriginalFilename())
                 .getFileName()
                 .toString();
         String extension = getExtension(originalName);
-        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new IllegalArgumentException("Unsupported file type: " + extension);
-        }
+        validateExtension(extension);
 
         String storedName = UUID.randomUUID() + "_" + originalName;
-        Path uploadPath = Paths.get(uploadDir);
-        Path target = uploadPath.resolve(storedName);
+        Path target = directory.resolve(storedName);
 
         try {
-            Files.createDirectories(uploadPath);
+            Files.createDirectories(directory);
             file.transferTo(target);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
@@ -136,11 +156,27 @@ public class MediaAssetServiceHandler {
         return mapToResponse(media);
     }
 
-    public void delete(Long id) {
-        if (!mediaAssetRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Media asset not found");
+    private News resolveNews(Long newsId) {
+        return newsRepository.findById(newsId)
+                .orElseThrow(() -> new ResourceNotFoundException("News not found"));
+    }
+
+    private void validateCategory(String category) {
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException("Category is required");
         }
-        mediaAssetRepository.deleteById(id);
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is required");
+        }
+    }
+
+    private void validateExtension(String extension) {
+        if (extension.isBlank() || !ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("Unsupported file type: " + extension);
+        }
     }
 
     private MediaAssetResponse mapToResponse(MediaAsset media) {

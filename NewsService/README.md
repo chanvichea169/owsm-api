@@ -154,25 +154,62 @@ Expected:
 - HTTP `201`
 - response `data` contains `fileUrl`, `fileType`, `category`, `originalFileName`, `storedFileName`
 
-### 3) Filter by category
+### 3) Upload news image
+
+News-specific images are stored under the existing `upload/news` folder.
+
+Replace:
+- `NEWS_ID` with real news id
+- `C:\temp\news-image.jpg` with your local file path
+
+```bash
+curl -X POST "http://localhost:8082/api/v1/media-assets/upload/news?newsId=NEWS_ID&category=news" ^
+  -H "Content-Type: multipart/form-data" ^
+  -F "file=@C:\temp\news-image.jpg"
+```
+
+Expected:
+- HTTP `201`
+- response `data` includes the same metadata and the file path lives in `upload/news`
+
+### 4) Upload multiple photos
+
+Send as many `files` fields as needed; each will produce a media asset record.
+
+Replace:
+- `NEWS_ID` with real news id
+- `C:\temp\photo1.jpg` / `C:\temp\photo2.jpg` with your photo paths
+
+```bash
+curl -X POST "http://localhost:8082/api/v1/media-assets/upload/photos?newsId=NEWS_ID&category=gallery" ^
+  -H "Content-Type: multipart/form-data" ^
+  -F "files=@C:\temp\photo1.jpg" ^
+  -F "files=@C:\temp\photo2.jpg"
+```
+
+Expected:
+- HTTP `201`
+- response `data` is a list of metadata objects describing each photo
+
+### 5) Filter by category
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?category=technology"
 ```
 
-### 4) Filter by news + category
+### 6) Filter by news + category
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?newsId=NEWS_ID&category=technology"
 ```
 
-### 5) Get all media by news
+### 7) Get all media by news
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?newsId=NEWS_ID"
 ```
 
-### 6) Publish news (optional)
+### 8) Publish news (optional)
 
 ```bash
 curl -X PUT "http://localhost:8082/api/v1/news/NEWS_ID/publish"

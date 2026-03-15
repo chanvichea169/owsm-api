@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.example.newsService.NewsServiceApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.00 s -- in com.example.newsService.NewsServiceApplicationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.248 s -- in com.example.newsService.NewsServiceApplicationTests

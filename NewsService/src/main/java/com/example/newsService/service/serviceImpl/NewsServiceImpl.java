@@ -8,6 +8,8 @@ import com.example.newsService.repository.NewsRepository;
 import com.example.newsService.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,6 +80,11 @@ public class NewsServiceImpl implements NewsService {
             throw new ResourceNotFoundException("News not found");
         }
         repository.deleteById(id);
+    }
+
+    @Override
+    public String uploadFile(MultipartFile file) {
+        return null;
     }
 
     private String generateSlug(String title){

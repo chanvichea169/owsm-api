@@ -33,8 +33,9 @@ server:
 
 app:
   file:
-    upload-dir: uploads
-    news-dir: upload/news
+    upload-dir: ../uploads
+    news-dir: ../uploads/news
+    gallery-dir: ../uploads/news/gallary_images
 
 logging:
   level:

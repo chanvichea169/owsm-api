@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,6 +16,7 @@ public class NewsResponse {
     private String content;
     private String category;
     private String coverImage;
+    private List<String> images;
     private String author;
     private String status;
     private Boolean isFeatured;

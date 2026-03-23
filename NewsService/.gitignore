@@ -1,29 +1,42 @@
+# =========================
+# IDE / Editor Files
+# =========================
 
-
-### STS ###
+# STS (Spring Tool Suite) / Eclipse
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IntelliJ IDEA
+.idea/
 *.iml
 *.ipr
+*.iws
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
+
+# VS Code
+.vscode/
+
+# =========================
+# Build Directories
+# =========================
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# =========================
+# Misc
+# =========================
+*.log
+.DS_Store
+Thumbs.db

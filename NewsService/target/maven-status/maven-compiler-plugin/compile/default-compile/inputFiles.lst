@@ -3,6 +3,7 @@ D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\con
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\CategoryRequest.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\model\Tag.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\repository\CommentRepository.java
+D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\service\serviceImpl\CategoryServiceImpl.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\service\handler\MediaAssetServiceHandler.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\AuthorRequest.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\enumeration\NewsStatus.java
@@ -32,6 +33,7 @@ D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\con
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\MediaAssetRequest.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\repository\CategoryRepository.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\CommentRequest.java
+D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\controller\CategoryController.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\ApiResponse.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\repository\TagRepository.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\service\MediaAssetService.java
@@ -39,5 +41,6 @@ D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\exception\OwsmException.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\model\Category.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\service\CategoryService.java
+D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\config\WebConfig.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\service\NewsService.java
 D:\DFRMOI\owsm-dev\BACKEND\NewsService\src\main\java\com\example\newsService\dto\MediaAssetResponse.java

@@ -126,17 +126,51 @@ Use this section to test quickly after starting the app.
 Base URL:
 - `http://localhost:8082/api/v1`
 
-### 1) Create News (test data)
+### 1) Create News (JSON data)
+
+Request body:
+
+```json
+{
+  "title": "AI in 2026",
+  "content": "News content for testing",
+  "category": "technology",
+  "coverImage": "cover.jpg",
+  "isFeatured": true
+}
+```
+
+Example:
 
 ```bash
 curl -X POST "http://localhost:8082/api/v1/news" ^
   -H "Content-Type: application/json" ^
-  -d "{\"title\":\"AI in 2026\",\"content\":\"News content for testing\",\"category\":\"technology\",\"coverImage\":\"https://example.com/cover.jpg\",\"isFeatured\":true}"
+  -d "{\"title\":\"AI in 2026\",\"content\":\"News content for testing\",\"category\":\"technology\",\"coverImage\":\"cover.jpg\",\"isFeatured\":true}"
 ```
 
 Expected:
 - HTTP `201`
 - response has `data.id` (use it as `newsId` for upload)
+
+Sample response data:
+
+```json
+{
+  "id": 1,
+  "title": "AI in 2026",
+  "slug": "ai-in-2026",
+  "content": "News content for testing",
+  "category": null,
+  "coverImage": "cover.jpg",
+  "author": null,
+  "status": "DRAFT",
+  "isFeatured": true,
+  "viewCount": 0,
+  "publishedAt": null,
+  "createdAt": "2026-03-22T10:00:00",
+  "updatedAt": null
+}
+```
 
 ### 2) Upload PDF / file
 
@@ -154,9 +188,26 @@ Expected:
 - HTTP `201`
 - response `data` contains `fileUrl`, `fileType`, `category`, `originalFileName`, `storedFileName`
 
+Sample response data:
+
+```json
+{
+  "id": 10,
+  "newsId": 1,
+  "fileUrl": "550e8400-e29b-41d4-a716-446655440000_sample.pdf",
+  "fileType": "application/pdf",
+  "fileSize": 12345,
+  "category": "technology",
+  "originalFileName": "sample.pdf",
+  "storedFileName": "550e8400-e29b-41d4-a716-446655440000_sample.pdf",
+  "createdAt": "2026-03-22T10:05:00",
+  "updatedAt": "2026-03-22T10:05:00"
+}
+```
+
 ### 3) Upload news image
 
-News-specific images are stored under the existing `upload/news` folder.
+News-specific images are stored under the existing `uploads/news` folder.
 
 Replace:
 - `NEWS_ID` with real news id
@@ -170,7 +221,25 @@ curl -X POST "http://localhost:8082/api/v1/media-assets/upload/news?newsId=NEWS_
 
 Expected:
 - HTTP `201`
-- response `data` includes the same metadata and the file path lives in `upload/news`
+- response `data` includes the same metadata and the file is stored in `uploads/news`
+- `news.coverImage` is updated with the generated image filename
+
+Sample response data:
+
+```json
+{
+  "id": 11,
+  "newsId": 1,
+  "fileUrl": "550e8400-e29b-41d4-a716-446655440001_news-image.jpg",
+  "fileType": "image/jpeg",
+  "fileSize": 45678,
+  "category": "news",
+  "originalFileName": "news-image.jpg",
+  "storedFileName": "550e8400-e29b-41d4-a716-446655440001_news-image.jpg",
+  "createdAt": "2026-03-22T10:06:00",
+  "updatedAt": "2026-03-22T10:06:00"
+}
+```
 
 ### 4) Upload multiple photos
 
@@ -191,25 +260,78 @@ Expected:
 - HTTP `201`
 - response `data` is a list of metadata objects describing each photo
 
-### 5) Filter by category
+Sample response data:
+
+```json
+[
+  {
+    "id": 12,
+    "newsId": 1,
+    "fileUrl": "550e8400-e29b-41d4-a716-446655440002_photo1.jpg",
+    "fileType": "image/jpeg",
+    "fileSize": 11111,
+    "category": "gallery",
+    "originalFileName": "photo1.jpg",
+    "storedFileName": "550e8400-e29b-41d4-a716-446655440002_photo1.jpg",
+    "createdAt": "2026-03-22T10:07:00",
+    "updatedAt": "2026-03-22T10:07:00"
+  },
+  {
+    "id": 13,
+    "newsId": 1,
+    "fileUrl": "550e8400-e29b-41d4-a716-446655440003_photo2.jpg",
+    "fileType": "image/jpeg",
+    "fileSize": 22222,
+    "category": "gallery",
+    "originalFileName": "photo2.jpg",
+    "storedFileName": "550e8400-e29b-41d4-a716-446655440003_photo2.jpg",
+    "createdAt": "2026-03-22T10:07:30",
+    "updatedAt": "2026-03-22T10:07:30"
+  }
+]
+```
+
+### 5) Update News (JSON data)
+
+Request body:
+
+```json
+{
+  "title": "AI in 2026 Updated",
+  "content": "Updated news content",
+  "category": "technology",
+  "coverImage": "550e8400-e29b-41d4-a716-446655440001_news-image.jpg",
+  "isFeatured": false
+}
+```
+
+Example:
+
+```bash
+curl -X PUT "http://localhost:8082/api/v1/news/NEWS_ID" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\":\"AI in 2026 Updated\",\"content\":\"Updated news content\",\"category\":\"technology\",\"coverImage\":\"550e8400-e29b-41d4-a716-446655440001_news-image.jpg\",\"isFeatured\":false}"
+```
+
+### 6) Filter by category
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?category=technology"
 ```
 
-### 6) Filter by news + category
+### 7) Filter by news + category
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?newsId=NEWS_ID&category=technology"
 ```
 
-### 7) Get all media by news
+### 8) Get all media by news
 
 ```bash
 curl "http://localhost:8082/api/v1/media-assets?newsId=NEWS_ID"
 ```
 
-### 8) Publish news (optional)
+### 9) Publish news (optional)
 
 ```bash
 curl -X PUT "http://localhost:8082/api/v1/news/NEWS_ID/publish"

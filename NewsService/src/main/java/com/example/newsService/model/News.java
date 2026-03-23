@@ -43,6 +43,10 @@ public class News extends BaseEntity {
     private List<Comment> comments;
 
     private String coverImage;
+    @ElementCollection
+    @CollectionTable(name = "tbl_news_images", joinColumns = @JoinColumn(name = "news_id"))
+    @Column(name = "image_path")
+    private List<String> images;
     private String status;
     private Boolean isFeatured = false;
     private Long viewCount = 0L;

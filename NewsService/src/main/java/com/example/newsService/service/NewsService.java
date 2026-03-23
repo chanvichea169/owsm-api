@@ -19,4 +19,6 @@ public interface NewsService {
     void delete(Long id);
 
     String uploadFile(MultipartFile file);
+
+    List<String> uploadFiles(List<MultipartFile> files);
 }

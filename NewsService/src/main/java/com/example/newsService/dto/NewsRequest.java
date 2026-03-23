@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,6 +21,7 @@ public class NewsRequest {
     private String category;
 
     private String coverImage;
+    private List<String> images;
     private String author;
     private Boolean isFeatured;
     private LocalDateTime publishedAt;

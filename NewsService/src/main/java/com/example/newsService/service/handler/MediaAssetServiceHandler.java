@@ -36,7 +36,7 @@ public class MediaAssetServiceHandler {
     @Value("${app.file.upload-dir:uploads}")
     private String uploadDir;
 
-    @Value("${app.file.news-dir:upload/news}")
+    @Value("${app.file.news-dir:uploads/news}")
     private String newsUploadDir;
 
     public MediaAssetResponse create(MediaAssetRequest request) {
@@ -97,12 +97,15 @@ public class MediaAssetServiceHandler {
 
     public MediaAssetResponse upload(Long newsId, String category, MultipartFile file) {
         News news = resolveNews(newsId);
-        return storeMediaAsset(news, category, file, Paths.get(uploadDir));
+        return mapToResponse(storeMediaAsset(news, category, file, Paths.get(uploadDir)));
     }
 
     public MediaAssetResponse uploadNewsImage(Long newsId, String category, MultipartFile file) {
         News news = resolveNews(newsId);
-        return storeMediaAsset(news, category, file, Paths.get(newsUploadDir));
+        MediaAsset media = storeMediaAsset(news, category, file, Paths.get(newsUploadDir));
+        news.setCoverImage(media.getStoredFileName());
+        newsRepository.save(news);
+        return mapToResponse(media);
     }
 
     public List<MediaAssetResponse> uploadPhotos(Long newsId, String category, List<MultipartFile> files) {
@@ -112,7 +115,7 @@ public class MediaAssetServiceHandler {
         News news = resolveNews(newsId);
         Path uploadPath = Paths.get(uploadDir);
         return files.stream()
-                .map(file -> storeMediaAsset(news, category, file, uploadPath))
+                .map(file -> mapToResponse(storeMediaAsset(news, category, file, uploadPath)))
                 .collect(Collectors.toList());
     }
 
@@ -123,7 +126,7 @@ public class MediaAssetServiceHandler {
         mediaAssetRepository.deleteById(id);
     }
 
-    private MediaAssetResponse storeMediaAsset(News news, String category, MultipartFile file, Path directory) {
+    private MediaAsset storeMediaAsset(News news, String category, MultipartFile file, Path directory) {
         validateCategory(category);
         validateFile(file);
         String originalName = Paths.get(file.getOriginalFilename() == null ? "file" : file.getOriginalFilename())
@@ -144,7 +147,7 @@ public class MediaAssetServiceHandler {
 
         MediaAsset media = MediaAsset.builder()
                 .news(news)
-                .fileUrl(target.toString())
+                .fileUrl(storedName)
                 .fileType(file.getContentType() != null ? file.getContentType() : extension)
                 .fileSize(file.getSize())
                 .category(category)
@@ -152,8 +155,7 @@ public class MediaAssetServiceHandler {
                 .storedFileName(storedName)
                 .build();
 
-        mediaAssetRepository.save(media);
-        return mapToResponse(media);
+        return mediaAssetRepository.save(media);
     }
 
     private News resolveNews(Long newsId) {

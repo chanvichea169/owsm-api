@@ -9,9 +9,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +27,30 @@ public class NewsController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<NewsResponse>> create(@Valid @RequestBody NewsRequest request) {
+        NewsResponse response = newsService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(buildResponse("News created successfully", response));
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<NewsResponse>> createMultipart(@RequestParam String title,
+                                                                     @RequestParam String content,
+                                                                     @RequestParam String category,
+                                                                     @RequestParam(required = false) String author,
+                                                                     @RequestParam(required = false) Boolean isFeatured,
+                                                                     @RequestParam(required = false) LocalDateTime publishedAt,
+                                                                     @RequestParam(value = "file", required = false) MultipartFile file,
+                                                                     @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                                                                     @RequestParam(value = "images", required = false) List<String> images) {
+        NewsRequest request = NewsRequest.builder()
+                .title(title)
+                .content(content)
+                .category(category)
+                .author(author)
+                .isFeatured(isFeatured)
+                .publishedAt(publishedAt)
+                .coverImage(file != null && !file.isEmpty() ? newsService.uploadFile(file) : null)
+                .images(files != null && !files.isEmpty() ? newsService.uploadFiles(files) : images)
+                .build();
         NewsResponse response = newsService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(buildResponse("News created successfully", response));
     }
@@ -51,6 +77,31 @@ public class NewsController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<NewsResponse>> update(@PathVariable Long id, @Valid @RequestBody NewsRequest request) {
+        return ResponseEntity.ok(buildResponse("News updated successfully", newsService.update(id, request)));
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<NewsResponse>> updateMultipart(@PathVariable Long id,
+                                                                     @RequestParam String title,
+                                                                     @RequestParam String content,
+                                                                     @RequestParam String category,
+                                                                     @RequestParam(required = false) String author,
+                                                                     @RequestParam(required = false) Boolean isFeatured,
+                                                                     @RequestParam(required = false) LocalDateTime publishedAt,
+                                                                     @RequestParam(value = "coverImage", required = false) String coverImage,
+                                                                     @RequestParam(value = "file", required = false) MultipartFile file,
+                                                                     @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                                                                     @RequestParam(value = "images", required = false) List<String> images) {
+        NewsRequest request = NewsRequest.builder()
+                .title(title)
+                .content(content)
+                .category(category)
+                .author(author)
+                .isFeatured(isFeatured)
+                .publishedAt(publishedAt)
+                .coverImage(file != null && !file.isEmpty() ? newsService.uploadFile(file) : coverImage)
+                .images(files != null && !files.isEmpty() ? newsService.uploadFiles(files) : images)
+                .build();
         return ResponseEntity.ok(buildResponse("News updated successfully", newsService.update(id, request)));
     }
 

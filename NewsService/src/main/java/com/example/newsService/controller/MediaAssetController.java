@@ -27,28 +27,28 @@ public class MediaAssetController {
                 .body(buildResponse("Media asset created successfully", mediaAssetService.create(request)));
     }
 
-    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    @PostMapping("/upload")
     public ResponseEntity<ApiResponse<MediaAssetResponse>> upload(@RequestParam Long newsId,
                                                                   @RequestParam String category,
-                                                                  @RequestPart MultipartFile file) {
+                                                                  @RequestParam("file") MultipartFile file) {
         MediaAssetResponse response = mediaAssetService.upload(newsId, category, file);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(buildResponse("Media asset uploaded successfully", response));
     }
 
-    @PostMapping(value = "/upload/news", consumes = "multipart/form-data")
+    @PostMapping("/upload/news")
     public ResponseEntity<ApiResponse<MediaAssetResponse>> uploadNewsImage(@RequestParam Long newsId,
                                                                            @RequestParam String category,
-                                                                           @RequestPart MultipartFile file) {
+                                                                           @RequestParam("file") MultipartFile file) {
         MediaAssetResponse response = mediaAssetService.uploadNewsImage(newsId, category, file);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(buildResponse("News image uploaded successfully", response));
     }
 
-    @PostMapping(value = "/upload/photos", consumes = "multipart/form-data")
+    @PostMapping("/upload/photos")
     public ResponseEntity<ApiResponse<List<MediaAssetResponse>>> uploadPhotos(@RequestParam Long newsId,
                                                                               @RequestParam String category,
-                                                                              @RequestPart("files") List<MultipartFile> files) {
+                                                                              @RequestParam("files") List<MultipartFile> files) {
         List<MediaAssetResponse> response = mediaAssetService.uploadPhotos(newsId, category, files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(buildResponse("Photos uploaded successfully", response));

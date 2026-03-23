@@ -17,8 +17,10 @@ com\example\newsService\dto\MediaAssetResponse.class
 com\example\newsService\dto\request\MediaAssetRequest.class
 com\example\newsService\model\Category$CategoryBuilder.class
 com\example\newsService\repository\AuthorRepository.class
+com\example\newsService\service\serviceImpl\CategoryServiceImpl.class
 com\example\newsService\dto\CategoryResponse.class
 com\example\newsService\service\TagService.class
+com\example\newsService\config\WebConfig.class
 com\example\newsService\controller\MediaAssetController.class
 com\example\newsService\model\MediaAsset.class
 com\example\newsService\dto\NewsResponse$NewsResponseBuilder.class
@@ -56,5 +58,6 @@ com\example\newsService\exception\OwsmException.class
 com\example\newsService\service\serviceImpl\MediaAssetServiceImpl.class
 com\example\newsService\dto\AuthorResponse.class
 com\example\newsService\model\Tag.class
+com\example\newsService\controller\CategoryController.class
 com\example\newsService\model\Comment$CommentBuilder.class
 com\example\newsService\dto\ApiErrorResponse.class

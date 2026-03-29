@@ -47,7 +47,7 @@ public class NewsServiceImpl implements NewsService {
                 .category(resolveCategory(request.getCategory()))
                 .author(resolveAuthor(request.getAuthor()))
                 .coverImage(normalizeCoverImage(request.getCoverImage()))
-                .images(request.getImages() != null ? normalizeImageList(request.getImages()) : List.of())
+                .images(request.getImages() != null ? normalizeImageList(request.getImages()) : new ArrayList<>())
                 .isFeatured(request.getIsFeatured())
                 .viewCount(0L)
                 .status(NewsStatus.DRAFT.name())
@@ -142,7 +142,7 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public List<String> uploadFiles(List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
-            return List.of();
+            return new ArrayList<>();
         }
         List<String> uploadedFiles = new ArrayList<>();
         for (MultipartFile file : files) {
@@ -197,12 +197,13 @@ public class NewsServiceImpl implements NewsService {
 
     private List<String> normalizeImageList(List<String> images) {
         if (images == null) {
-            return List.of();
+            return new ArrayList<>();
         }
-        return images.stream()
+        List<String> normalized = images.stream()
                 .filter(image -> image != null && !image.isBlank())
                 .map(this::normalizeGalleryImage)
                 .toList();
+        return new ArrayList<>(normalized);
     }
 
     private String normalizeGalleryImage(String image) {

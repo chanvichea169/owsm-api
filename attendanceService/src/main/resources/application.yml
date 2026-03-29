@@ -3,7 +3,7 @@ spring:
     name: attendanceService
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/news_db
+    url: jdbc:postgresql://localhost:5432/attendance_db
     username: postgres
     password: 123
     driver-class-name: org.postgresql.Driver

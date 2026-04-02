@@ -94,6 +94,10 @@ services:
       SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: Path=/api/attendance/**
       SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_1: Path=/api/departments/**
       SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_2: Path=/api/offices/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_3: Path=/api/companies/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_4: Path=/api/employees/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_5: Path=/api/companies/*/offices/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_6: Path=/uploads/**
 
       SPRING_CLOUD_GATEWAY_ROUTES_2_ID: NewsService
       SPRING_CLOUD_GATEWAY_ROUTES_2_URI: http://news-service:8082

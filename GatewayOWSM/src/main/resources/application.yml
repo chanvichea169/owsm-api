@@ -13,6 +13,11 @@ spring:
           predicates:
             - Path=/api/users/**,/api/roles/**,/api/profile/**,/api/auth/**,/api/permissions/**,/uploads/profiles/**
 
+        - id: AttendanceService
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/attendance/**,/api/companies/**,/api/employees/**,/api/companies/*/offices/**,/uploads/**
+
         - id: NewsService
           uri: http://localhost:8082
           predicates:

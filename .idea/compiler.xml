@@ -7,6 +7,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="attendanceService" />
         <module name="GatewayOWSM" />
       </profile>
       <profile name="Annotation profile for NewsService" enabled="true">
@@ -18,16 +19,6 @@
           <entry name="$MAVEN_REPOSITORY$/org/springframework/boot/spring-boot-configuration-processor/3.3.2/spring-boot-configuration-processor-3.3.2.jar" />
         </processorPath>
         <module name="NewsService" />
-      </profile>
-      <profile name="Annotation profile for attendanceService" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
-          <entry name="$MAVEN_REPOSITORY$/org/springframework/boot/spring-boot-configuration-processor/unknown/spring-boot-configuration-processor-unknown.jar" />
-        </processorPath>
-        <module name="attendanceService" />
       </profile>
       <profile name="Annotation profile for swsm-management-system" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />

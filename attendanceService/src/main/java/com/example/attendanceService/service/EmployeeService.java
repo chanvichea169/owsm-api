@@ -2,6 +2,7 @@ package com.example.attendanceService.service;
 
 import com.example.attendanceService.common.exception.AuthenticationFailedException;
 import com.example.attendanceService.common.exception.ResourceNotFoundException;
+import com.example.attendanceService.dto.ChangePasswordRequest;
 import com.example.attendanceService.dto.CreateEmployeeRequest;
 import com.example.attendanceService.dto.EmployeeLoginRequest;
 import com.example.attendanceService.dto.UpdateEmployeeRequest;
@@ -42,11 +43,13 @@ public class EmployeeService {
         Employee employee = new Employee();
         employee.setFirstName(request.firstName());
         employee.setLastName(request.lastName());
+        employee.setUsername(request.username());
         employee.setEmail(request.email());
         employee.setPhoneNumber(request.phoneNumber());
         employee.setCompany(company);
         employee.setOffice(office);
         employee.setPassword(passwordEncoder.encode(request.password()));
+        employee.setRequiresPasswordChange(true);
         return employeeRepository.save(employee);
     }
 
@@ -70,6 +73,9 @@ public class EmployeeService {
         }
         if (request.lastName() != null) {
             employee.setLastName(request.lastName());
+        }
+        if (request.username() != null) {
+            employee.setUsername(request.username());
         }
         if (request.email() != null) {
             employee.setEmail(request.email());
@@ -100,14 +106,25 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
+    public void changePassword(Long employeeId, ChangePasswordRequest request) {
+        Employee employee = getEmployee(employeeId);
+        if (!passwordEncoder.matches(request.currentPassword(), employee.getPassword())) {
+            throw new AuthenticationFailedException("Current password is incorrect");
+        }
+        employee.setPassword(passwordEncoder.encode(request.newPassword()));
+        employee.setRequiresPasswordChange(false);
+        employeeRepository.save(employee);
+    }
+
     public void deleteEmployee(Long employeeId) {
         Employee employee = getEmployee(employeeId);
         employeeRepository.delete(employee);
     }
 
     public Employee authenticateEmployee(EmployeeLoginRequest request) {
-        Employee employee = employeeRepository.findByEmail(request.email())
-            .orElseThrow(() -> new AuthenticationFailedException("Invalid email or password"));
+        Employee employee = employeeRepository.findByEmail(request.identifier())
+            .or(() -> employeeRepository.findByUsername(request.identifier()))
+            .orElseThrow(() -> new AuthenticationFailedException("Invalid credentials"));
         if (!passwordEncoder.matches(request.password(), employee.getPassword())) {
             throw new AuthenticationFailedException("Invalid email or password");
         }

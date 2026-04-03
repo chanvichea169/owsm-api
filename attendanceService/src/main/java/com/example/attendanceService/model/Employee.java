@@ -28,10 +28,16 @@ public class Employee extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false, unique = true)
+    private String username;
+
     private String phoneNumber;
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean requiresPasswordChange = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", nullable = false)
@@ -44,15 +50,12 @@ public class Employee extends BaseEntity {
     public Employee() {
     }
 
-    public Employee(Long id, String firstName, String lastName, String email, String phoneNumber, String password, Company company, Office office) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.password = password;
-        this.company = company;
-        this.office = office;
+    public boolean isRequiresPasswordChange() {
+        return requiresPasswordChange;
+    }
+
+    public void setRequiresPasswordChange(boolean requiresPasswordChange) {
+        this.requiresPasswordChange = requiresPasswordChange;
     }
 
     public Long getId() {
@@ -85,6 +88,14 @@ public class Employee extends BaseEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPhoneNumber() {

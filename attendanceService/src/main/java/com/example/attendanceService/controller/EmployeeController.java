@@ -1,5 +1,6 @@
 package com.example.attendanceService.controller;
 
+import com.example.attendanceService.dto.ChangePasswordRequest;
 import com.example.attendanceService.dto.CreateEmployeeRequest;
 import com.example.attendanceService.dto.EmployeeLoginRequest;
 import com.example.attendanceService.dto.EmployeeResponse;
@@ -49,6 +50,15 @@ public class EmployeeController {
     public EmployeeResponse login(@Valid @RequestBody EmployeeLoginRequest request) {
         var employee = employeeService.authenticateEmployee(request);
         return EmployeeResponse.from(employee);
+    }
+
+    @PostMapping("/{employeeId}/change-password")
+    public ResponseEntity<Void> changePassword(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        employeeService.changePassword(employeeId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{employeeId}")

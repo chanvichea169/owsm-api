@@ -79,23 +79,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse loginUser(UserRequest request) throws OwsmException {
+        String loginIdentifier = extractLoginIdentifier(request);
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        loginIdentifier,
                         request.getPassword()
                 )
         );
 
-        User user = (User) userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+        User user = userRepository.findByEmail(loginIdentifier)
+                .orElseGet(() -> userRepository.findByUsername(loginIdentifier).orElse(null));
+
+        if (user == null) {
+            throw new OwsmException("USER_NOT_FOUND");
+        }
 
         if (!user.isEnabled()) {
             throw new OwsmException("ACCOUNT_NOT_VERIFIED");
         }
 
         UserDetails userDetails =
-                userDetailsService.loadUserByUsername(user.getUsername());
+                userDetailsService.loadUserByUsername(loginIdentifier);
 
         String token = jwtUtil.generateToken(userDetails);
 
@@ -243,5 +248,21 @@ public class UserServiceImpl implements UserService {
         message.setSubject("OWSM Account Verification OTP");
         message.setText("Your OTP code is: " + otp);
         mailSender.send(message);
+    }
+
+    private String extractLoginIdentifier(UserRequest request) throws OwsmException {
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new OwsmException("PASSWORD_REQUIRED");
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            return request.getEmail().trim();
+        }
+
+        if (request.getUsername() != null && !request.getUsername().isBlank()) {
+            return request.getUsername().trim();
+        }
+
+        throw new OwsmException("USERNAME_OR_EMAIL_REQUIRED");
     }
 }

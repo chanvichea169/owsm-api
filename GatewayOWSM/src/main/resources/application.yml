@@ -1,5 +1,5 @@
 server:
-  port: 9001
+  port: ${SERVER_PORT:9001}
 
 spring:
   application:
@@ -9,17 +9,17 @@ spring:
     gateway:
       routes:
         - id: AuthService
-          uri: http://localhost:8081
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/api/users/**,/api/roles/**,/api/profile/**,/api/auth/**,/api/permissions/**,/uploads/profiles/**
 
         - id: AttendanceService
-          uri: http://localhost:8083
+          uri: ${ATTENDANCE_SERVICE_URI:http://localhost:8083}
           predicates:
             - Path=/api/attendance/**,/api/companies/**,/api/employees/**,/api/companies/*/offices/**,/uploads/**
 
         - id: NewsService
-          uri: http://localhost:8082
+          uri: ${NEWS_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/api/news/**,/api/categories/**,/api/comments/**,/api/tags/**,/api/authors/**,/api/media-assets/**,/uploads/news/**
 

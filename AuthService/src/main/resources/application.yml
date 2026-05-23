@@ -3,9 +3,9 @@ spring:
     name: owsm-auth-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
-    username: postgres
-    password: 123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -38,7 +38,7 @@ spring:
             required: true
 
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
 
 logging:
   level:
@@ -51,8 +51,8 @@ logging:
               BasicBinder: TRACE
 
 jwt:
-  secret: 2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c
-  expiration: 86400000
+  secret: ${JWT_SECRET:2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 errors:
   USER_NOT_FOUND: "User not found"
@@ -61,4 +61,4 @@ errors:
 
 app:
   upload:
-    dir: uploads/profiles
+    dir: ${APP_UPLOAD_DIR:uploads/profiles}

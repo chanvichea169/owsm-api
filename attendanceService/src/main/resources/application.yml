@@ -3,10 +3,9 @@ spring:
     name: attendanceService
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/attendance_db
-    username: postgres
-    password: 123
-    driver-class-name: org.postgresql.Driver
+    url: "${SPRING_DATASOURCE_URL:jdbc:h2:mem:attendance_db;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}"
+    username: "${SPRING_DATASOURCE_USERNAME:sa}"
+    password: "${SPRING_DATASOURCE_PASSWORD:}"
 
   jpa:
     hibernate:
@@ -17,7 +16,6 @@ spring:
       hibernate:
         format_sql: true
         highlight_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         use_sql_comments: true
 
   mvc:

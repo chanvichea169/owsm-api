@@ -22,8 +22,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-                .orElseGet(() -> (User) userRepository.findByUsername(username)
+                .orElseGet(() -> userRepository.findByUsername(username)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found with email or username: " + username)));
+
+        if (user.getRole() == null || user.getRole().getName() == null) {
+            throw new UsernameNotFoundException("User has no assigned role: " + username);
+        }
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(user.getRole().getName().name()));

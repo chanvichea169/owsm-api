@@ -1,0 +1,4 @@
+CREATE DATABASE news_db;
+CREATE DATABASE attendance_db;
+CREATE DATABASE auth_db;
+CREATE DATABASE gateway_db;

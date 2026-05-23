@@ -33,6 +33,7 @@ com\owsm\AuthService\model\UserProfile.class
 com\owsm\AuthService\model\User.class
 com\owsm\AuthService\repository\RoleRepository.class
 com\owsm\AuthService\repository\UserRepository.class
+com\owsm\AuthService\controller\UserProfileController$1.class
 com\owsm\AuthService\dto\UserProfileRequest.class
 com\owsm\AuthService\dto\UserProfileRequest$UserProfileRequestBuilder.class
 com\owsm\AuthService\service\handler\UserProfileServiceHandler.class

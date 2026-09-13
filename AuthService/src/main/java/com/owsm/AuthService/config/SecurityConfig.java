@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -39,6 +40,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // ---------- Public endpoints ----------
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
@@ -48,12 +50,36 @@ public class SecurityConfig {
                                 "/api/profile/**",
                                 "/uploads/**"
                         ).permitAll()
+
+                        // Allow CORS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ---------- Password change: any logged-in user ----------
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/password")
+                        .authenticated()
+
+                        // ---------- Enable / disable / toggle: admins only ----------
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/users/*/enable",
+                                "/api/users/*/disable",
+                                "/api/users/*/toggle-status"
+                        ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
+
+                        // ---------- User update (PUT /api/users/{id}) ----------
+                        // Allow OFFICER too so they can edit their own record
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*")
+                        .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT", "OFFICER")
+
+                        // ---------- User listing / read ----------
                         .requestMatchers(
                                 "/api/users/**",
                                 "/api/roles/**",
                                 "/api/news/**",
                                 "/api/profile/**"
-                        ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
+                        ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT", "OFFICER")
+
+                        // ---------- Everything else ----------
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

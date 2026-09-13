@@ -1,9 +1,9 @@
 package com.owsm.AuthService.controller;
-
+import com.owsm.AuthService.dto.ChangePasswordRequest;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.dto.VerifyOtpRequest;
-import com.owsm.AuthService.exception.OwsmException     ;
+import com.owsm.AuthService.exception.OwsmException;
 import com.owsm.AuthService.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -63,7 +63,6 @@ public class UserController {
         }
     }
 
-
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(@RequestBody Map<String, String> request) {
         try {
@@ -109,6 +108,58 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (OwsmException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Long id,
+            @RequestBody ChangePasswordRequest request) {
+        try {
+            if (request.getCurrentPassword() == null || request.getNewPassword() == null
+                    || request.getCurrentPassword().isBlank() || request.getNewPassword().isBlank()) {
+                return ResponseEntity.badRequest().body("Current and new password are required");
+            }
+
+            userService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok("Password updated successfully");
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/enable")
+    public ResponseEntity<?> enableUser(@PathVariable Long id) {
+        try {
+            userService.setUserEnabled(id, true);
+            return ResponseEntity.ok("User enabled successfully");
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/disable")
+    public ResponseEntity<?> disableUser(@PathVariable Long id) {
+        try {
+            userService.setUserEnabled(id, false);
+            return ResponseEntity.ok("User disabled successfully");
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleUserStatus(@PathVariable Long id) {
+        try {
+            boolean enabled = userService.toggleUserEnabled(id);
+            return ResponseEntity.ok(Map.of(
+                    "enabled", enabled,
+                    "message", enabled ? "User enabled successfully" : "User disabled successfully"
+            ));
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 }

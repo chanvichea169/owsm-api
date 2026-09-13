@@ -1,64 +1,64 @@
-spring:
-  application:
-    name: owsm-auth-service
+  spring:
+    application:
+      name: owsm-auth-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:123}
-    driver-class-name: org.postgresql.Driver
+    datasource:
+      url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
+      username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      password: ${SPRING_DATASOURCE_PASSWORD:123}
+      driver-class-name: org.postgresql.Driver
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    defer-datasource-initialization: true
-    show-sql: true
-    properties:
+    jpa:
       hibernate:
-        format_sql: true
-        highlight_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        use_sql_comments: true
+        ddl-auto: update
+      defer-datasource-initialization: true
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+          highlight_sql: true
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          use_sql_comments: true
 
-  mvc:
-    pathmatch:
-      matching-strategy: ant_path_matcher
+    mvc:
+      pathmatch:
+        matching-strategy: ant_path_matcher
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: chanvichea169@gmail.com
-    password: fqtsaxyo bgilzlyr
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
+    mail:
+      host: smtp.gmail.com
+      port: 587
+      username: chanvichea169@gmail.com
+      password: fqtsaxyo bgilzlyr
+      properties:
+        mail:
+          smtp:
+            auth: true
+            starttls:
+              enable: true
+              required: true
 
-server:
-  port: ${SERVER_PORT:8081}
+  server:
+    port: ${SERVER_PORT:8081}
 
-logging:
-  level:
-    org:
-      hibernate:
-        SQL: DEBUG
-        type:
-          descriptor:
-            sql:
-              BasicBinder: TRACE
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+          type:
+            descriptor:
+              sql:
+                BasicBinder: TRACE
 
-jwt:
-  secret: ${JWT_SECRET:2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c}
-  expiration: ${JWT_EXPIRATION:86400000}
+  jwt:
+    secret: ${JWT_SECRET:2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c}
+    expiration: ${JWT_EXPIRATION:86400000}
 
-errors:
-  USER_NOT_FOUND: "User not found"
-  EMAIL_ALREADY_EXISTS: "Email already exists"
-  INVALID_CREDENTIALS: "Invalid credentials"
+  errors:
+    USER_NOT_FOUND: "User not found"
+    EMAIL_ALREADY_EXISTS: "Email already exists"
+    INVALID_CREDENTIALS: "Invalid credentials"
 
-app:
-  upload:
-    dir: ${APP_UPLOAD_DIR:uploads/profiles}
+  app:
+    upload:
+      dir: ${APP_UPLOAD_DIR:uploads/profiles}

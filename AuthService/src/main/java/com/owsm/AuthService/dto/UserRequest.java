@@ -6,10 +6,9 @@ import java.util.Date;
 
 @Data
 public class UserRequest {
+    private Long id;
     private String username;
     private String email;
     private String password;
-    private Long roleId;
-    private Date createdAt;
-    private Date updatedAt;
+    private Integer roleId;
 }

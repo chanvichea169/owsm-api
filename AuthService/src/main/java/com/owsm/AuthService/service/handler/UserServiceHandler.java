@@ -6,19 +6,22 @@ import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.model.Role;
 import com.owsm.AuthService.model.User;
 import com.owsm.AuthService.repository.RoleRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceHandler {
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
+
+    // ================= VALIDATION =================
 
     public void validateUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
@@ -42,20 +45,29 @@ public class UserServiceHandler {
         }
     }
 
+    // ================= REQUEST → ENTITY =================
+
     public User convertToUser(UserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
+
         if (request.getRoleId() != null) {
-            Role role = roleRepository.findById(request.getRoleId())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleId()));
+            Role role = roleRepository.findById(Long.valueOf(request.getRoleId()))
+                    .orElseThrow(() -> new RuntimeException(
+                            "Role not found: " + request.getRoleId()));
             user.setRole(role);
         }
+
         user.setPassword(request.getPassword());
+        // Note: OTP, enabled, active are set explicitly in UserServiceImpl.registerUser
+        // so we don't duplicate that logic here.
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         return user;
     }
+
+    // ================= ENTITY → RESPONSE =================
 
     public UserResponse convertToUserResponse(User user) {
         UserResponse userResponse = new UserResponse();
@@ -63,31 +75,36 @@ public class UserServiceHandler {
         userResponse.setId(user.getId());
         userResponse.setUsername(user.getUsername());
         userResponse.setEmail(user.getEmail());
+
+        // Email OTP verification state
         userResponse.setEnabled(user.isEnabled());
 
-        // Handle the nested Role object
+        // Admin-controlled enable/disable — drives the UI toggle icon
+        userResponse.setActive(user.isActive());
+
+        // Nested role
         if (user.getRole() != null) {
             RoleResponse roleResponse = new RoleResponse();
             roleResponse.setId(user.getRole().getId());
             roleResponse.setName(String.valueOf(user.getRole().getName()));
-
-            // Pass the object itself, not a String representation
+            roleResponse.setDescription(user.getRole().getDescription());
             userResponse.setRole(roleResponse);
         }
 
-        // Modern Date Conversion
+        // LocalDateTime → java.util.Date
         if (user.getCreatedAt() != null) {
-            userResponse.setCreatedAt(java.util.Date.from(
-                    user.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
-            ));
+            userResponse.setCreatedAt(toDate(user.getCreatedAt()));
         }
-
         if (user.getUpdatedAt() != null) {
-            userResponse.setUpdatedAt(java.util.Date.from(
-                    user.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
-            ));
+            userResponse.setUpdatedAt(toDate(user.getUpdatedAt()));
         }
 
         return userResponse;
+    }
+
+    // ================= HELPERS =================
+
+    private Date toDate(LocalDateTime value) {
+        return Date.from(value.atZone(ZoneId.systemDefault()).toInstant());
     }
 }

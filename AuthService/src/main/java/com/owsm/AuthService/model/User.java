@@ -1,27 +1,42 @@
 package com.owsm.AuthService.model;
 
-import com.owsm.AuthService.common.audit.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
 
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
+import java.time.LocalDateTime;
+
+@Data
 @Entity
-@Builder
 @Table(name = "tbl_users")
-public class User extends BaseEntity {
+public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String username;
-    @Column(unique = true)
     private String email;
     private String password;
+
+    /** Email OTP verified */
+    @Column(nullable = false)
+    private boolean enabled = false;
+
+    /** Admin-controlled enable/disable */
+    @Column(nullable = false)
+    private boolean active = true;
+
     private String otp;
-    private boolean enabled;
-    @ManyToOne
+    @Column(name = "otp_created_at")
+    private LocalDateTime otpCreatedAt;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

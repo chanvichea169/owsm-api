@@ -338,42 +338,24 @@ public class UserServiceImpl implements UserService {
         Random random = new Random();
         return String.valueOf(100000 + random.nextInt(900000));
     }
-
-    /**
-     * Send a styled HTML OTP email.
-     *
-     * Uses MimeMessage + MimeMessageHelper so the client picks HTML when
-     * supported, otherwise falls back to plain text.
-     *
-     * Failures are logged but NOT rethrown — the surrounding transaction
-     * (user creation, OTP persist) must still commit so the user can retry
-     * via /resend-otp.
-     */
     private void sendOtpEmail(String to, String otp) {
         log.info("Attempting to send OTP to {} (code: {})", to, otp);
         try {
-            // multipart = true so we can attach both plain text and HTML
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
                     message, true, StandardCharsets.UTF_8.name());
 
             helper.setTo(to);
-            // Include the code in the subject so it's visible in the inbox preview
             helper.setSubject("OWSM · Your Verification Code (" + otp + ")");
-            // Plain text first (fallback), HTML second (preferred)
             helper.setText(buildOtpPlainText(otp), buildOtpHtml(otp));
 
             mailSender.send(message);
             log.info("OTP email sent successfully to {}", to);
         } catch (Exception e) {
             log.error("Failed to send OTP to {}: {}", to, e.getMessage(), e);
-            // Swallow — user record and OTP remain saved.
         }
     }
 
-    /**
-     * Plain-text fallback for email clients that don't render HTML.
-     */
     private String buildOtpPlainText(String otp) {
         return """
             One Window Service Mechanism
@@ -386,103 +368,167 @@ public class UserServiceImpl implements UserService {
             — OWSM Team
             """.formatted(otp);
     }
-
-    /**
-     * Styled HTML body with the code in a prominent card.
-     * Table-based layout + inline CSS → renders correctly in Gmail,
-     * Outlook, Apple Mail, and most webmail clients.
-     */
-    /**
-     * Styled HTML body with the code in a prominent card.
-     * Table-based layout + inline CSS → renders correctly in Gmail,
-     * Outlook, Apple Mail, and most webmail clients.
-     *
-     * Font: "Khmer OS Siemreab" first, with fallbacks for clients that
-     * don't have it installed (Android, iOS, macOS).
-     *
-     * NOTE: %% escapes literal % inside String.formatted()
-     */
     private String buildOtpHtml(String otp) {
-        // Space digits for readability: 130529 → "1 3 0 5 2 9"
-        String spacedOtp = String.join(" ", otp.split(""));
+        // Build OTP digit boxes
+        StringBuilder otpBoxes = new StringBuilder();
+        for (char c : otp.toCharArray()) {
+            otpBoxes.append("""
+            <td align="center" style="padding: 0 4px;">
+              <div class="otp-digit-box" style="width:44px;height:54px;line-height:54px;background-color:#ffffff;border:2px solid #e2e8f0;border-radius:12px;font-size:26px;font-weight:700;color:#0f172a;font-family:'SF Mono',Consolas,Monaco,monospace;text-align:center;box-shadow:0 2px 6px rgba(15,23,42,0.06);">
+                %s
+              </div>
+            </td>
+            """.formatted(c));
+        }
 
         return """
         <!DOCTYPE html>
-        <html lang="km">
+        <html lang="km" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta name="x-apple-disable-message-reformatting" />
+          <meta name="color-scheme" content="light dark" />
+          <meta name="supported-color-schemes" content="light dark" />
           <title>លេខកូដផ្ទៀងផ្ទាត់ OWSM</title>
+          <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
-            /* Khmer OS Siemreab first, then platform fallbacks */
-            body, table, td, div, p, h1, strong, span {
-              font-family: 'Khmer OS Siemreab', 'Khmer OS', 'Siemreab',
-                           'Kantumruy Pro', 'Noto Sans Khmer',
-                           'Segoe UI', Roboto, Arial, sans-serif;
+            body, table, td, p, a, li, blockquote {
+              -webkit-text-size-adjust: 100%%;
+              -ms-text-size-adjust: 100%%;
+            }
+            table, td {
+              mso-table-lspace: 0pt;
+              mso-table-rspace: 0pt;
+            }
+            img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%%; outline: none; text-decoration: none; }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100%% !important;
+              background-color: #f1f5f9;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            * {
+              font-family: 'Kantumruy Pro', 'Khmer OS Siemreab', 'Siemreab', 'Noto Sans Khmer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            }
+            /* Dark mode adaptations */
+            @media (prefers-color-scheme: dark) {
+              .email-container   { background-color:#1e293b !important; border-color:#334155 !important; }
+              .brand-header      { background: linear-gradient(135deg, #0f172a 0%%, #1e293b 100%%) !important; }
+              .body-text         { color:#cbd5e1 !important; }
+              .otp-digit-box     { background-color:#0f172a !important; border-color:#334155 !important; color:#f8fafc !important; }
+              .otp-section-bg    { background-color:#0f172a !important; border-color:#334155 !important; }
+              .security-warning  { background-color:#2d1b0e !important; border-color:#78350f !important; }
+              .security-warning-text { color:#fcd34d !important; }
+              .footer-text       { color:#64748b !important; border-top-color:#334155 !important; }
+              .footer-copyright  { color:#475569 !important; }
+              .otp-label         { color:#94a3b8 !important; }
+              .main-heading      { color:#f1f5f9 !important; }
+              .badge-text        { color:#7dd3fc !important; }
+              .body-strong       { color:#f1f5f9 !important; }
+            }
+            /* Mobile responsiveness */
+            @media only screen and (max-width: 480px) {
+              .email-container   { width:100%% !important; border-radius:14px !important; }
+              .padding-mobile    { padding-left:20px !important; padding-right:20px !important; }
+              .brand-header      { padding: 28px 20px 22px 20px !important; }
+              .otp-digit-box     { width:36px !important; height:46px !important; line-height:46px !important; font-size:20px !important; }
             }
           </style>
         </head>
-        <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer','Segoe UI',Roboto,Arial,sans-serif;color:#0f172a;line-height:1.8;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%%" style="background-color:#f1f5f9;padding:32px 12px;">
+        <body style="margin:0; padding:0; background-color:#f1f5f9; color:#0f172a;">
+
+          <!-- Preheader (hidden inbox preview text) -->
+          <div style="display:none; font-size:1px; color:#f1f5f9; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+            លេខកូដផ្ទៀងផ្ទាត់ OWSM របស់អ្នក — មានសុពលភាព ៥ នាទី
+          </div>
+
+          <!-- Main Wrapper -->
+          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9; padding: 32px 16px;">
             <tr>
               <td align="center">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%%" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
 
-                  <!-- Header -->
+                <!-- Email Container -->
+                <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:520px; background-color:#ffffff; border-radius:20px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 25px 50px -12px rgba(15,23,42,0.15);">
+
+                  <!-- Brand Header -->
                   <tr>
-                    <td style="background:linear-gradient(135deg,#0f172a 0%%,#1e3a8a 100%%);padding:28px 24px;text-align:center;">
-                      <div style="display:inline-block;background-color:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:999px;padding:6px 14px;color:#a5f3fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-                        OWSM
-                      </div>
-                      <h1 style="margin:14px 0 0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer',Arial,sans-serif;">
+                    <td align="center" class="brand-header" style="padding:40px 36px 28px 36px; background: linear-gradient(135deg, #0f172a 0%%, #1e293b 100%%); text-align:center;">
+                      <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                        <tr>
+                          <td align="center" style="background: rgba(56,189,248,0.12); border:1.5px solid rgba(56,189,248,0.30); border-radius:24px; padding:7px 20px;">
+                            <span class="badge-text" style="color:#38bdf8; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; display:inline-block;">OWSM System</span>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <h1 class="main-heading" style="margin:18px 0 0 0; color:#ffffff; font-size:22px; font-weight:700; line-height:1.4; text-align:center; letter-spacing:-0.3px;">
                         យន្តការច្រកចេញចូលតែមួយ
                       </h1>
+
+                      <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 0 auto;">
+                        <tr>
+                          <td style="width:40px; height:3px; background: linear-gradient(90deg, transparent, #38bdf8, transparent); border-radius:2px;"></td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
 
-                  <!-- Body -->
+                  <!-- Main Content -->
                   <tr>
-                    <td style="padding:32px 28px 8px;">
-                      <p style="margin:0 0 24px;font-size:16px;line-height:1.9;color:#475569;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer',Arial,sans-serif;">
-                        សូមប្រើប្រាស់លេខកូដផ្ទៀងផ្ទាត់ខាងក្រោម ដើម្បីបញ្ចប់ការចូលប្រើប្រាស់របស់អ្នក។ លេខកូដនេះមានសុពលភាពរយៈពេល
-                        <strong style="color:#0f172a;">៥ នាទី</strong>។
+                    <td class="padding-mobile" style="padding:36px 40px 28px 40px;">
+                      <p class="body-text" style="margin:0 0 28px 0; font-size:15px; line-height:1.8; color:#475569; text-align:center;">
+                        សូមប្រើប្រាស់លេខកូដផ្ទៀងផ្ទាត់ខាងក្រោម ដើម្បីបញ្ចប់ការចូលប្រើប្រាស់គណនីរបស់អ្នក។ លេខកូដនេះមានសុពលភាពរយៈពេល <strong class="body-strong" style="color:#0f172a; font-weight:700;">៥ នាទី</strong> ប៉ុណ្ណោះ។
                       </p>
 
-                      <!-- OTP card -->
-                      <div style="background-color:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:24px 16px;text-align:center;">
-                        <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:12px;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer',Arial,sans-serif;">
+                      <!-- OTP Digit Display -->
+                      <div class="otp-section-bg" style="background-color:#f8fafc; border-radius:16px; padding:28px 16px 24px 16px; margin-bottom:28px; border:1px solid #f1f5f9;">
+                        <p class="otp-label" style="margin:0 0 16px 0; font-size:11px; font-weight:700; color:#64748b; text-align:center; text-transform:uppercase; letter-spacing:1.5px;">
                           លេខកូដផ្ទៀងផ្ទាត់របស់អ្នក
-                        </div>
-                        <div style="display:inline-block;background-color:#0f172a;color:#a5f3fc;font-size:24px;font-weight:800;letter-spacing:2px;padding:16px 24px;border-radius:12px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;">
-                          %s
-                        </div>
+                        </p>
+                        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            %s
+                          </tr>
+                        </table>
                       </div>
 
-                      <!-- Warning -->
-                      <div style="margin-top:24px;background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 16px;">
-                        <p style="margin:0;font-size:14px;color:#78350f;line-height:1.9;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer',Arial,sans-serif;">
-                          រាល់ការចូលប្រើប្រើប្រ័ន្ធ លោកអ្នកនឹងទទួលលេខសុវត្ថិភាព។ សូមកុំចែករំលែកវាទៅអ្នកដទៃ។
-                        </p>
-                      </div>
+                      <!-- Security Warning -->
+                      <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0" class="security-warning" style="background-color:#fffbeb; border:1.5px solid #fde68a; border-radius:12px;">
+                        <tr>
+                          <td width="24" valign="top" style="padding:16px 12px 16px 18px; font-size:18px; line-height:1;">
+                            🔒
+                          </td>
+                          <td class="security-warning-text" style="padding:16px 18px 16px 0; font-size:13px; line-height:1.7; color:#92400e;">
+                            <strong style="font-weight:700;">ការព្រមានអំពីសុវត្ថិភាព:</strong> សូមកុំចែករំលែកលេខកូដនេះទៅកាន់អ្នកផ្សេងឱ្យសោះ រួមទាំងបុគ្គលិក OWSM ផងដែរ។
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
 
                   <!-- Footer -->
                   <tr>
-                    <td style="padding:24px 28px 28px;text-align:center;border-top:1px solid #e2e8f0;margin-top:24px;">
-                      <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.9;font-family:'Khmer OS Siemreab','Khmer OS','Siemreab','Kantumruy Pro','Noto Sans Khmer',Arial,sans-serif;">
-                        &copy; ២០២៦ យន្តការច្រកចេញចូលតែមួយ។ រក្សាសិទ្ធិគ្រប់បែបយ៉ាង។
+                    <td class="padding-mobile footer-text" style="padding:24px 40px 36px 40px; border-top:1px solid #f1f5f9; text-align:center;">
+                      <p style="margin:0 0 8px 0; font-size:12px; color:#94a3b8; line-height:1.6;">
+                        អ៊ីមែលនេះត្រូវបានផ្ញើដោយស្វ័យប្រវត្តិ សូមកុំឆ្លើយតបមកកាន់អ៊ីមែលនេះ។
+                      </p>
+                      <p class="footer-copyright" style="margin:0; font-size:12px; color:#cbd5e1;">
+                        &copy; ២០២៦ យន្តការច្រកចេញចូលតែមួយ (OWSM)។ រក្សាសិទ្ធិគ្រប់យ៉ាង។
                       </p>
                     </td>
                   </tr>
 
                 </table>
+
               </td>
             </tr>
           </table>
         </body>
         </html>
-        """.formatted(spacedOtp);
+        """.formatted(otpBoxes.toString());
     }
     private String extractLoginIdentifier(UserRequest request) throws OwsmException {
         if (request.getPassword() == null || request.getPassword().isBlank()) {

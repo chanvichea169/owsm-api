@@ -22,7 +22,7 @@ public class GatewayConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("auth-service", r -> r
-                        .path("/api/users/**", "/api/roles/**", "/api/profile/**", "/uploads/profiles/**")
+                        .path("/api/users/**", "/api/roles/**", "/api/profile/**", "/api/locations/**", "/uploads/profiles/**")
                         .uri(authServiceUri)
                 )
                 .route("news-service", r -> r

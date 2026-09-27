@@ -19,7 +19,7 @@ import org.springframework.http.HttpMethod;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtRequestFilter jwtRequestFilter;
+    private final   JwtRequestFilter jwtRequestFilter;
 
     public SecurityConfig(JwtRequestFilter jwtRequestFilter, @Lazy UserDetailsService userDetailsService) {
         this.jwtRequestFilter = jwtRequestFilter;
@@ -53,6 +53,16 @@ public class SecurityConfig {
 
                         // Allow CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ---------- Administrative location management ----------
+                        .requestMatchers(HttpMethod.POST, "/api/locations/**")
+                        .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/locations/**")
+                        .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/locations/**")
+                        .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
+                        .requestMatchers(HttpMethod.GET, "/api/locations/**")
+                        .permitAll()
 
                         // ---------- Password change: any logged-in user ----------
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/password")

@@ -6,6 +6,7 @@ import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.exception.OwsmException;
 import com.owsm.AuthService.model.Role;
 import com.owsm.AuthService.model.User;
+import com.owsm.AuthService.model.Village;
 import com.owsm.AuthService.repository.RoleRepository;
 import com.owsm.AuthService.repository.UserRepository;
 import com.owsm.AuthService.service.UserService;
@@ -96,9 +97,9 @@ public class UserServiceImpl implements UserService {
                 ? rawIdentifier.toLowerCase()
                 : rawIdentifier;
 
-        User user = userRepository.findByEmail(loginIdentifier)
+        User user = userRepository.findByEmailWithLocation(loginIdentifier)
                 .orElseGet(() ->
-                        userRepository.findByUsername(loginIdentifier).orElse(null));
+                        userRepository.findByUsernameWithLocation(loginIdentifier).orElse(null));
 
         if (user == null) {
             throw new OwsmException("USER_NOT_FOUND");
@@ -132,7 +133,7 @@ public class UserServiceImpl implements UserService {
 
         String normalized = email == null ? "" : email.trim().toLowerCase();
 
-        User user = userRepository.findByEmail(normalized)
+        User user = userRepository.findByEmailWithLocation(normalized)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (!user.isActive()) {
@@ -228,6 +229,15 @@ public class UserServiceImpl implements UserService {
             user.setRole(role);
         }
 
+        if (request.getStreetAddress() != null) {
+            user.setStreetAddress(request.getStreetAddress());
+        }
+
+        if (request.getVillageCode() != null) {
+            Village village = userServiceHandler.findVillageByCode(request.getVillageCode());
+            user.setVillage(village);
+        }
+
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
@@ -260,6 +270,56 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
+                .map(userServiceHandler::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserResponse updateUserLocation(Long id, String streetAddress, String villageCode)
+            throws OwsmException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+
+        user.setStreetAddress(streetAddress);
+        user.setVillage(villageCode == null
+                ? null
+                : userServiceHandler.findVillageByCode(villageCode));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        return userServiceHandler.convertToUserResponse(userRepository.save(user));
+    }
+
+    @Override
+    public UserResponse getUserWithLocation(Long id) throws OwsmException {
+        User user = userRepository.findByIdWithLocation(id)
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+        return userServiceHandler.convertToUserResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getUsersByVillage(String villageCode) {
+        return userRepository.findByVillageVillageCode(villageCode).stream()
+                .map(userServiceHandler::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getUsersByCommune(Integer communeCode) {
+        return userRepository.findByVillageCommuneCommuneCode(communeCode).stream()
+                .map(userServiceHandler::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getUsersByDistrict(Integer districtCode) {
+        return userRepository.findByVillageCommuneDistrictDistrictCode(districtCode).stream()
+                .map(userServiceHandler::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getUsersByProvince(Integer provinceCode) {
+        return userRepository.findByVillageCommuneDistrictProvinceProvinceCode(provinceCode).stream()
                 .map(userServiceHandler::convertToUserResponse)
                 .collect(Collectors.toList());
     }
@@ -346,7 +406,7 @@ public class UserServiceImpl implements UserService {
                     message, true, StandardCharsets.UTF_8.name());
 
             helper.setTo(to);
-            helper.setSubject("OWSM · Your Verification Code (" + otp + ")");
+            helper.setSubject("DFR: Dear Value Partner, Your Verification Code Below:");
             helper.setText(buildOtpPlainText(otp), buildOtpHtml(otp));
 
             mailSender.send(message);
@@ -459,13 +519,13 @@ public class UserServiceImpl implements UserService {
                       <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
                         <tr>
                           <td align="center" style="background: rgba(56,189,248,0.12); border:1.5px solid rgba(56,189,248,0.30); border-radius:24px; padding:7px 20px;">
-                            <span class="badge-text" style="color:#38bdf8; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; display:inline-block;">OWSM System</span>
+                            <span class="badge-text" style="color:#38bdf8; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; display:inline-block;">DFR System</span>
                           </td>
                         </tr>
                       </table>
 
                       <h1 class="main-heading" style="margin:18px 0 0 0; color:#ffffff; font-size:22px; font-weight:700; line-height:1.4; text-align:center; letter-spacing:-0.3px;">
-                        យន្តការច្រកចេញចូលតែមួយ
+                       នាយកដ្ឋានមុខងារ និងធនធាន
                       </h1>
 
                       <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 0 auto;">
@@ -502,7 +562,7 @@ public class UserServiceImpl implements UserService {
                             🔒
                           </td>
                           <td class="security-warning-text" style="padding:16px 18px 16px 0; font-size:13px; line-height:1.7; color:#92400e;">
-                            <strong style="font-weight:700;">ការព្រមានអំពីសុវត្ថិភាព:</strong> សូមកុំចែករំលែកលេខកូដនេះទៅកាន់អ្នកផ្សេងឱ្យសោះ រួមទាំងបុគ្គលិក OWSM ផងដែរ។
+                            <strong style="font-weight:700;">ការព្រមានអំពីសុវត្ថិភាព:</strong> សូមកុំចែករំលែកលេខកូដនេះទៅកាន់អ្នកផ្សេងឱ្យសោះ រួមទាំងបុគ្គលិក DFR ផងដែរ។
                           </td>
                         </tr>
                       </table>
@@ -516,7 +576,7 @@ public class UserServiceImpl implements UserService {
                         អ៊ីមែលនេះត្រូវបានផ្ញើដោយស្វ័យប្រវត្តិ សូមកុំឆ្លើយតបមកកាន់អ៊ីមែលនេះ។
                       </p>
                       <p class="footer-copyright" style="margin:0; font-size:12px; color:#cbd5e1;">
-                        &copy; ២០២៦ យន្តការច្រកចេញចូលតែមួយ (OWSM)។ រក្សាសិទ្ធិគ្រប់យ៉ាង។
+                        &copy; ២០២៦ យន្តការច្រកចេញចូលតែមួយ (DFR)។ រក្សាសិទ្ធិគ្រប់យ៉ាង។
                       </p>
                     </td>
                   </tr>

@@ -99,6 +99,47 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @PutMapping("/{id}/location")
+    public ResponseEntity<?> updateUserLocation(
+            @PathVariable Long id,
+            @RequestBody UserRequest request) {
+        try {
+            return ResponseEntity.ok(userService.updateUserLocation(
+                    id, request.getStreetAddress(), request.getVillageCode()));
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/location")
+    public ResponseEntity<?> getUserWithLocation(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(userService.getUserWithLocation(id));
+        } catch (OwsmException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/by-village/{villageCode}")
+    public ResponseEntity<List<UserResponse>> getUsersByVillage(@PathVariable String villageCode) {
+        return ResponseEntity.ok(userService.getUsersByVillage(villageCode));
+    }
+
+    @GetMapping("/by-commune/{communeCode}")
+    public ResponseEntity<List<UserResponse>> getUsersByCommune(@PathVariable Integer communeCode) {
+        return ResponseEntity.ok(userService.getUsersByCommune(communeCode));
+    }
+
+    @GetMapping("/by-district/{districtCode}")
+    public ResponseEntity<List<UserResponse>> getUsersByDistrict(@PathVariable Integer districtCode) {
+        return ResponseEntity.ok(userService.getUsersByDistrict(districtCode));
+    }
+
+    @GetMapping("/by-province/{provinceCode}")
+    public ResponseEntity<List<UserResponse>> getUsersByProvince(@PathVariable Integer provinceCode) {
+        return ResponseEntity.ok(userService.getUsersByProvince(provinceCode));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {

@@ -34,6 +34,15 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    /** Specific address detail (e.g., House No, Street No) */
+    @Column(name = "street_address")
+    private String streetAddress;
+
+    /** Foreign Key linking to the village (Cambodia administrative unit) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "village_code")
+    private Village village;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

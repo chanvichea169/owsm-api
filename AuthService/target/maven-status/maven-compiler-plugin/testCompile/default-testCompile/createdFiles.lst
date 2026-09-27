@@ -1,1 +1,4 @@
+com\owsm\AuthService\UserProfileEmailTests.class
+com\owsm\AuthService\UserLocationMappingTests.class
+com\owsm\AuthService\AdministrativeLocationServiceTests.class
 com\owsm\AuthService\OWSMApplicationTests.class

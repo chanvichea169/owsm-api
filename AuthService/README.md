@@ -155,6 +155,106 @@ A successful OTP resend will return a `200 OK` status with the message "OTP rese
 
 A successful deletion will return a `204 No Content` status.
 
+## User Location Mapping
+
+Registration and user updates accept an optional `streetAddress` and `villageCode`.
+The Auth Service resolves the village and returns a `location` object containing
+the village, commune, district, and province codes and names.
+
+To replace a user's location:
+
+**Endpoint:** `PUT /api/users/{id}/location`
+
+```json
+{
+  "streetAddress": "House 10, Street 5",
+  "villageCode": "12030501"
+}
+```
+
+Use `GET /api/users/{id}/location` to retrieve a user's location. Users can also
+be filtered with `GET /api/users/by-village/{villageCode}`,
+`/api/users/by-commune/{communeCode}`, `/api/users/by-district/{districtCode}`,
+and `/api/users/by-province/{provinceCode}`.
+
+The user response includes the street address and mapped location, for example:
+
+```json
+{
+  "streetAddress": "House 10, Street 5",
+  "location": {
+    "villageCode": "12030501",
+    "villageEn": "Village name",
+    "communeCode": 120305,
+    "districtCode": 1203,
+    "provinceCode": 12
+  }
+}
+```
+
+## Administrative Location CRUD
+
+The administrative location API supports create, read, update, and delete
+operations for provinces, districts, communes, and villages. Create children
+only after creating their parent. Reads are public so registration forms can
+populate location dropdowns before login. Writes require an `ADMIN` or
+`HEAD_OF_DEPARTMENT` authority.
+
+| Resource | Collection | Parent field |
+| --- | --- | --- |
+| Province | `/api/locations/provinces` | — |
+| District | `/api/locations/districts` | `provinceCode` |
+| Commune | `/api/locations/communes` | `districtCode` |
+| Village | `/api/locations/villages` | `communeCode` |
+
+Use `POST` on a collection to create, `GET` on a collection to list, `GET
+/{code}` to fetch one, `PUT /{code}` to update, and `DELETE /{code}` to remove
+an item. District, commune, and village collection queries return all records
+by default and can be filtered by parent, for example
+`GET /api/locations/districts?provinceCode=12`.
+
+Example village create request:
+
+```json
+{
+  "villageCode": "12030501",
+  "villageKh": "ភូមិថ្មី",
+  "villageEn": "New Village",
+  "communeCode": 120305
+}
+```
+
+Province, district, and commune codes use integers to match their database
+columns. Village codes remain strings to preserve leading zeroes.
+
+Updates retain the existing code; the request code must match the code in the
+URL. A location with child records (or a village assigned to users) cannot be
+deleted.
+
+### Cascading province, district, commune, and village selection
+
+The API supports dependent dropdowns. Populate the next dropdown after the
+current selection by passing the selected code:
+
+1. Load province options with `GET /api/locations/provinces`.
+2. After selecting a province, load its districts with
+   `GET /api/locations/provinces/{provinceCode}/districts`.
+3. After selecting a district, load its communes with
+   `GET /api/locations/districts/{districtCode}/communes`.
+4. After selecting a commune, load its villages with
+   `GET /api/locations/communes/{communeCode}/villages`.
+
+Each response item includes `code`, `nameEn`, and `nameKh` for the dropdown
+label, plus `parentCode`. Use `code` as the selected value and clear all
+downstream selections whenever a parent selection changes.
+
+The API gateway routes `/api/locations/**` to AuthService and is the single
+CORS owner for browser requests. It allows `http://localhost:3000` by default.
+Override the gateway's comma-separated allowlist with `CORS_ALLOWED_ORIGINS`
+when deploying the frontend at a different origin. AuthService does not add
+CORS headers, preventing duplicate `Access-Control-Allow-Origin` response
+headers.
+
 ---
 
 This README will be further expanded with more details about other functionalities and setup instructions.

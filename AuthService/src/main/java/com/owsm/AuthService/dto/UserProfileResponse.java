@@ -43,5 +43,6 @@ public class UserProfileResponse {
     @NoArgsConstructor
     public static class UserInnerResponse {
         private Long id;
+        private String email;
     }
 }

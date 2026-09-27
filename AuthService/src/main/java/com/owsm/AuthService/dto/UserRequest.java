@@ -11,4 +11,6 @@ public class UserRequest {
     private String email;
     private String password;
     private Integer roleId;
+    private String streetAddress;
+    private String villageCode;
 }

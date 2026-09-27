@@ -11,6 +11,7 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
+    private String streetAddress;
 
     /** Email OTP verified */
     private boolean enabled;
@@ -24,4 +25,5 @@ public class UserResponse {
     private RoleResponse role;
     private Date createdAt;
     private Date updatedAt;
+    private LocationResponse location;
 }

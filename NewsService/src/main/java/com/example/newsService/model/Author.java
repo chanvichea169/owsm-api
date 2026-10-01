@@ -17,8 +17,12 @@ public class Author extends BaseEntity {
     private Long id;
 
     private String fullName;
+    private String fullNameEn;
+    private String fullNameKh;
     private String email;
     private String bio;
+    private String bioEn;
+    private String bioKh;
     private String avatarUrl;
     private Boolean isActive = true;
 }

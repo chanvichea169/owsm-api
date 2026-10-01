@@ -40,6 +40,12 @@ public class AttendanceRecord extends BaseEntity {
 
     private String notes;
 
+    @Column(name = "notes_en")
+    private String notesEn;
+
+    @Column(name = "notes_kh")
+    private String notesKh;
+
     public AttendanceRecord() {
     }
 
@@ -107,5 +113,13 @@ public class AttendanceRecord extends BaseEntity {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getNotesEn() {
+        return notesEn;
+    }
+
+    public String getNotesKh() {
+        return notesKh;
     }
 }

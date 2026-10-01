@@ -1,1 +1,3 @@
 com\example\newsService\NewsServiceApplicationTests.class
+com\example\newsService\service\serviceImpl\NewsServiceImplTest.class
+com\example\newsService\util\NewsDateTimeParserTest.class

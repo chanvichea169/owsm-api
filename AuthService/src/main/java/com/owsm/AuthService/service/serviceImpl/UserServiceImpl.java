@@ -11,6 +11,11 @@ import com.owsm.AuthService.repository.RoleRepository;
 import com.owsm.AuthService.repository.UserRepository;
 import com.owsm.AuthService.service.UserService;
 import com.owsm.AuthService.service.handler.UserServiceHandler;
+import com.owsm.AuthService.securityaudit.enumeration.LoginStatus;
+import com.owsm.AuthService.securityaudit.enumeration.SecurityEventStatus;
+import com.owsm.AuthService.securityaudit.enumeration.SecurityEventType;
+import com.owsm.AuthService.securityaudit.service.AuthSessionService;
+import com.owsm.AuthService.securityaudit.service.AuthenticationAuditService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +50,8 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final RoleRepository roleRepository;
+    private final AuthenticationAuditService authenticationAuditService;
+    private final AuthSessionService authSessionService;
 
     // ================= REGISTER =================
 
@@ -90,7 +97,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse loginUser(UserRequest request) throws OwsmException {
-        String rawIdentifier = extractLoginIdentifier(request);
+        String rawIdentifier;
+        try {
+            rawIdentifier = extractLoginIdentifier(request);
+        } catch (OwsmException exception) {
+            authenticationAuditService.recordLoginAttempt(
+                    null,
+                    request.getEmail() != null ? request.getEmail() : request.getUsername(),
+                    LoginStatus.FAILED,
+                    exception.getMessage(),
+                    "PASSWORD",
+                    null,
+                    null);
+            throw exception;
+        }
 
         // Emails are case-insensitive; usernames are not
         String loginIdentifier = rawIdentifier.contains("@")
@@ -102,14 +122,38 @@ public class UserServiceImpl implements UserService {
                         userRepository.findByUsernameWithLocation(loginIdentifier).orElse(null));
 
         if (user == null) {
+            authenticationAuditService.recordLoginAttempt(
+                    null,
+                    loginIdentifier,
+                    LoginStatus.ACCOUNT_NOT_FOUND,
+                    "Account was not found",
+                    "PASSWORD",
+                    null,
+                    null);
             throw new OwsmException("USER_NOT_FOUND");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    loginIdentifier,
+                    LoginStatus.FAILED,
+                    "Invalid credentials",
+                    "PASSWORD",
+                    null,
+                    null);
             throw new OwsmException("INVALID_CREDENTIALS");
         }
 
         if (!user.isActive()) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    loginIdentifier,
+                    LoginStatus.ACCOUNT_DISABLED,
+                    "Account is disabled",
+                    "PASSWORD",
+                    null,
+                    null);
             throw new OwsmException("ACCOUNT_DISABLED");
         }
 
@@ -119,7 +163,26 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        sendOtpEmail(user.getEmail(), user.getOtp());
+        if (!sendOtpEmail(user.getEmail(), user.getOtp())) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    loginIdentifier,
+                    LoginStatus.FAILED,
+                    "One-time code delivery failed",
+                    "EMAIL_OTP",
+                    null,
+                    null);
+            throw new OwsmException("OTP_DELIVERY_FAILED");
+        }
+
+        authenticationAuditService.recordLoginAttempt(
+                user,
+                loginIdentifier,
+                LoginStatus.MFA_REQUIRED,
+                null,
+                "PASSWORD",
+                null,
+                null);
 
         UserResponse response = userServiceHandler.convertToUserResponse(user);
         response.setToken(null);
@@ -134,17 +197,52 @@ public class UserServiceImpl implements UserService {
         String normalized = email == null ? "" : email.trim().toLowerCase();
 
         User user = userRepository.findByEmailWithLocation(normalized)
-                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+                .orElse(null);
+        if (user == null) {
+            authenticationAuditService.recordLoginAttempt(
+                    null,
+                    normalized,
+                    LoginStatus.ACCOUNT_NOT_FOUND,
+                    "Account was not found",
+                    "OTP",
+                    null,
+                    null);
+            throw new OwsmException("USER_NOT_FOUND");
+        }
 
         if (!user.isActive()) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    normalized,
+                    LoginStatus.ACCOUNT_DISABLED,
+                    "Account is disabled",
+                    "OTP",
+                    null,
+                    null);
             throw new OwsmException("ACCOUNT_DISABLED");
         }
 
         if (user.getOtp() == null || user.getOtp().isBlank()) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    normalized,
+                    LoginStatus.TOKEN_EXPIRED,
+                    "One-time code is unavailable or expired",
+                    "OTP",
+                    null,
+                    null);
             throw new OwsmException("OTP_EXPIRED");
         }
 
         if (!user.getOtp().trim().equals(otp.trim())) {
+            authenticationAuditService.recordLoginAttempt(
+                    user,
+                    normalized,
+                    LoginStatus.MFA_FAILED,
+                    "Invalid one-time code",
+                    "OTP",
+                    null,
+                    null);
             throw new OwsmException("INVALID_OTP");
         }
 
@@ -157,7 +255,18 @@ public class UserServiceImpl implements UserService {
 
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(user.getUsername());
-        String token = jwtUtil.generateToken(userDetails);
+        AuthSessionService.SessionIdentifiers session = authSessionService.create(user);
+        String token = jwtUtil.generateToken(userDetails, session.sessionId(), session.tokenId());
+
+        authenticationAuditService.recordLoginAttempt(
+                user,
+                normalized,
+                LoginStatus.SUCCESS,
+                null,
+                "PASSWORD_AND_MFA",
+                session.sessionId(),
+                session.tokenId(),
+                session.expiresAt());
 
         UserResponse response = userServiceHandler.convertToUserResponse(user);
         response.setToken(token);
@@ -338,16 +447,34 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            authenticationAuditService.recordSecurityEvent(
+                    user,
+                    SecurityEventType.PASSWORD_CHANGE,
+                    SecurityEventStatus.FAILURE,
+                    "Password change rejected because current password validation failed",
+                    null);
             throw new OwsmException("CURRENT_PASSWORD_INCORRECT");
         }
 
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            authenticationAuditService.recordSecurityEvent(
+                    user,
+                    SecurityEventType.PASSWORD_CHANGE,
+                    SecurityEventStatus.DENIED,
+                    "Password change rejected because the new password matched the current password",
+                    null);
             throw new OwsmException("NEW_PASSWORD_MUST_DIFFER");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+        authenticationAuditService.recordSecurityEvent(
+                user,
+                SecurityEventType.PASSWORD_CHANGE,
+                SecurityEventStatus.SUCCESS,
+                "Password changed successfully",
+                null);
     }
 
     // ================= ENABLE / DISABLE =================
@@ -398,8 +525,8 @@ public class UserServiceImpl implements UserService {
         Random random = new Random();
         return String.valueOf(100000 + random.nextInt(900000));
     }
-    private void sendOtpEmail(String to, String otp) {
-        log.info("Attempting to send OTP to {} (code: {})", to, otp);
+    private boolean sendOtpEmail(String to, String otp) {
+        log.info("Attempting to send OTP to {}", to);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
@@ -411,8 +538,10 @@ public class UserServiceImpl implements UserService {
 
             mailSender.send(message);
             log.info("OTP email sent successfully to {}", to);
+            return true;
         } catch (Exception e) {
             log.error("Failed to send OTP to {}: {}", to, e.getMessage(), e);
+            return false;
         }
     }
 

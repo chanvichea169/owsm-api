@@ -2,6 +2,18 @@ spring:
   application:
     name: NewsService
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: 5m
+      cache-null-values: false
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
   datasource:
     url: jdbc:postgresql://localhost:5432/news_db
     username: postgres

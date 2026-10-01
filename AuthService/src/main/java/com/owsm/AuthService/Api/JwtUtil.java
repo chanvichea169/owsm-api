@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -28,18 +29,39 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be set to a Base64-encoded key of at least 32 bytes");
+        }
+        byte[] decodedKey;
+        try {
+            decodedKey = Base64.getDecoder().decode(secret);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("JWT_SECRET must be valid Base64 encoding", exception);
+        }
+        if (decodedKey.length < 32) {
+            throw new IllegalStateException("JWT_SECRET must decode to at least 32 bytes");
+        }
         key = Keys.hmacShaKeyFor(decodedKey);
     }
 
     public String generateToken(UserDetails userDetails) {
+        return generateToken(userDetails, null, null);
+    }
+
+    public String generateToken(UserDetails userDetails, UUID sessionId, UUID tokenId) {
         Map<String, Object> claims = new HashMap<>();
-        return Jwts.builder()
+        if (sessionId != null) {
+            claims.put("sid", sessionId.toString());
+        }
+        var builder = Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + expiration));
+        if (tokenId != null) {
+            builder.setId(tokenId.toString());
+        }
+        return builder.signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -50,6 +72,16 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public UUID extractSessionId(String token) {
+        String sessionId = extractClaim(token, claims -> claims.get("sid", String.class));
+        return sessionId == null ? null : UUID.fromString(sessionId);
+    }
+
+    public UUID extractTokenId(String token) {
+        String tokenId = extractClaim(token, Claims::getId);
+        return tokenId == null ? null : UUID.fromString(tokenId);
     }
 
     public Date extractExpiration(String token) {

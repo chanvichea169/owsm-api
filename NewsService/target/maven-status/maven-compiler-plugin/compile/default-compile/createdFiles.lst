@@ -22,6 +22,7 @@ com\example\newsService\dto\CategoryResponse.class
 com\example\newsService\service\TagService.class
 com\example\newsService\config\WebConfig.class
 com\example\newsService\controller\MediaAssetController.class
+com\example\newsService\util\NewsDateTimeParser.class
 com\example\newsService\model\MediaAsset.class
 com\example\newsService\dto\NewsResponse$NewsResponseBuilder.class
 com\example\newsService\dto\request\MediaAssetRequest$MediaAssetRequestBuilder.class

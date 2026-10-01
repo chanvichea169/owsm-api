@@ -37,12 +37,12 @@ public class CompanyController {
 
     @GetMapping
     public List<CompanyResponse> list() {
-        return companyService.listCompanies().stream().map(CompanyResponse::from).toList();
+        return companyService.listCompanies();
     }
 
     @GetMapping("/{companyId}")
     public CompanyResponse get(@PathVariable Long companyId) {
-        return CompanyResponse.from(companyService.getCompany(companyId));
+        return companyService.getCompanyResponse(companyId);
     }
 
     @PutMapping("/{companyId}")

@@ -18,6 +18,8 @@ public class Tag {
     private Long id;
 
     private String name;
+    private String nameEn;
+    private String nameKh;
     private String slug;
 
     @ManyToMany(mappedBy = "tags")

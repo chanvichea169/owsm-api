@@ -7,6 +7,8 @@ import com.example.newsService.model.Category;
 import com.example.newsService.repository.CategoryRepository;
 import com.example.newsService.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
 
     @Override
+    @CacheEvict(cacheNames = {"news-categories", "news-items"}, allEntries = true)
     public CategoryResponse create(CategoryRequest request) {
         Category category = Category.builder()
                 .name(request.getName())
@@ -29,6 +32,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"news-categories", "news-items"}, allEntries = true)
     public CategoryResponse update(Long id, CategoryRequest request) {
         return repository.findById(id)
                 .map(category -> {
@@ -42,12 +46,14 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(cacheNames = "news-categories", key = "'category:' + #id")
     public CategoryResponse getById(Long id) {
         return map(repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found")));
     }
 
     @Override
+    @Cacheable(cacheNames = "news-categories", key = "'all'")
     public List<CategoryResponse> getAll() {
         return repository.findAll()
                 .stream()
@@ -56,6 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"news-categories", "news-items"}, allEntries = true)
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Category not found");

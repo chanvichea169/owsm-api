@@ -44,4 +44,8 @@ public class AttendanceService {
         employeeService.getEmployee(employeeId);
         return attendanceRecordRepository.findByEmployeeIdOrderByRecordedAtDesc(employeeId);
     }
+
+    public List<AttendanceRecord> allHistory() {
+        return attendanceRecordRepository.findAllWithEmployeeOrderByRecordedAtDesc();
+    }
 }

@@ -22,10 +22,22 @@ public class Office extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "name_en")
+    private String nameEn;
+
+    @Column(name = "name_kh")
+    private String nameKh;
+
     @Column(nullable = false, unique = true)
     private String code;
 
     private String address;
+
+    @Column(name = "address_en")
+    private String addressEn;
+
+    @Column(name = "address_kh")
+    private String addressKh;
 
     private String phoneNumber;
 
@@ -62,6 +74,14 @@ public class Office extends BaseEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNameEn() {
+        return nameEn;
+    }
+
+    public String getNameKh() {
+        return nameKh;
     }
 
     public String getCode() {

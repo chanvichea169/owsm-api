@@ -53,6 +53,25 @@ services:
     networks:
       - backend
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping 2>/dev/null | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend
+
   auth-service:
     build:
       context: ./AuthService
@@ -62,6 +81,8 @@ services:
     depends_on:
       postgres-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
     ports:
       - "8081:8081"
@@ -70,6 +91,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123
+      JWT_SECRET: ${JWT_SECRET:-}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
       SPRING_PROFILES_ACTIVE: docker
 
     restart: always
@@ -86,6 +113,8 @@ services:
     depends_on:
       postgres-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
     ports:
       - "8083:8083"
@@ -94,6 +123,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/attendance_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
       SPRING_PROFILES_ACTIVE: docker
 
     restart: always
@@ -110,6 +142,8 @@ services:
     depends_on:
       postgres-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
     ports:
       - "8082:8082"
@@ -118,6 +152,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/news_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
       SPRING_PROFILES_ACTIVE: docker
 
     restart: always
@@ -175,6 +212,7 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:
 
 networks:
   backend:

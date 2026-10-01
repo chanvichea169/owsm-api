@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 public record OfficeResponse(
     Long id,
     String name,
+    String nameEn,
+    String nameKh,
     String code,
     String address,
     String phoneNumber,
@@ -19,6 +21,8 @@ public record OfficeResponse(
         return new OfficeResponse(
             office.getId(),
             office.getName(),
+            office.getNameEn(),
+            office.getNameKh(),
             office.getCode(),
             office.getAddress(),
             office.getPhoneNumber(),

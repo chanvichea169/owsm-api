@@ -40,7 +40,6 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ---------- Public endpoints ----------
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
@@ -51,10 +50,23 @@ public class SecurityConfig {
                                 "/uploads/**"
                         ).permitAll()
 
-                        // Allow CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // ---------- Administrative location management ----------
+                        .requestMatchers(HttpMethod.GET, "/api/menu-access/**")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/menu-access/**")
+                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/sidebar-menus")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/sidebar-menus")
+                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/sidebar-menus/**")
+                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/menu-access")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/menu-access")
+                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/*/menu-access")
+                        .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/locations/**")
                         .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
                         .requestMatchers(HttpMethod.PUT, "/api/locations/**")
@@ -63,33 +75,25 @@ public class SecurityConfig {
                         .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
                         .requestMatchers(HttpMethod.GET, "/api/locations/**")
                         .permitAll()
-
-                        // ---------- Password change: any logged-in user ----------
-                        .requestMatchers(HttpMethod.PUT, "/api/users/*/password")
+                        .requestMatchers(HttpMethod.POST, "/api/users/logout")
                         .authenticated()
 
-                        // ---------- Enable / disable / toggle: admins only ----------
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/password")
+                        .authenticated()
                         .requestMatchers(
                                 HttpMethod.PUT,
                                 "/api/users/*/enable",
                                 "/api/users/*/disable",
                                 "/api/users/*/toggle-status"
                         ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT")
-
-                        // ---------- User update (PUT /api/users/{id}) ----------
-                        // Allow OFFICER too so they can edit their own record
                         .requestMatchers(HttpMethod.PUT, "/api/users/*")
                         .hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT", "OFFICER")
-
-                        // ---------- User listing / read ----------
                         .requestMatchers(
                                 "/api/users/**",
                                 "/api/roles/**",
                                 "/api/news/**",
                                 "/api/profile/**"
                         ).hasAnyAuthority("ADMIN", "HEAD_OF_DEPARTMENT", "OFFICER")
-
-                        // ---------- Everything else ----------
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

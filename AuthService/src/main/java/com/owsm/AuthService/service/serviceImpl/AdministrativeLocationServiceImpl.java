@@ -8,6 +8,7 @@ import com.owsm.AuthService.dto.VillageRequest;
 import com.owsm.AuthService.model.Commune;
 import com.owsm.AuthService.model.District;
 import com.owsm.AuthService.model.Province;
+import com.owsm.AuthService.model.User;
 import com.owsm.AuthService.model.Village;
 import com.owsm.AuthService.repository.CommuneRepository;
 import com.owsm.AuthService.repository.DistrictRepository;
@@ -19,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -35,6 +38,7 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     private final UserRepository userRepository;
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse createProvince(ProvinceRequest request) {
         ensureNewCode(provinceRepository.existsById(request.getProvinceCode()), "Province", request.getProvinceCode());
         Province province = new Province();
@@ -47,17 +51,20 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'province:' + #code")
     public AdministrativeLocationResponse getProvince(Integer code) {
         return toResponse(requireProvince(code));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'provinces'")
     public List<AdministrativeLocationResponse> getProvinces() {
         return provinceRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse updateProvince(Integer code, ProvinceRequest request) {
         requireMatchingCode(code, request.getProvinceCode());
         Province province = requireProvince(code);
@@ -68,6 +75,7 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public void deleteProvince(Integer code) {
         Province province = requireProvince(code);
         if (districtRepository.countByProvinceProvinceCode(code) > 0) {
@@ -77,6 +85,7 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse createDistrict(DistrictRequest request) {
         ensureNewCode(districtRepository.existsById(request.getDistrictCode()), "District", request.getDistrictCode());
         District district = new District();
@@ -89,12 +98,14 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'district:' + #code")
     public AdministrativeLocationResponse getDistrict(Integer code) {
         return toResponse(requireDistrict(code));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'districts:' + #provinceCode")
     public List<AdministrativeLocationResponse> getDistricts(Integer provinceCode) {
         if (provinceCode == null) {
             return districtRepository.findAll().stream().map(this::toResponse).toList();
@@ -104,16 +115,41 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse updateDistrict(Integer code, DistrictRequest request) {
-        requireMatchingCode(code, request.getDistrictCode());
         District district = requireDistrict(code);
+        Province province = requireProvince(request.getProvinceCode());
+        if (!code.equals(request.getDistrictCode())) {
+            ensureNewCode(
+                    districtRepository.existsById(request.getDistrictCode()),
+                    "District",
+                    request.getDistrictCode());
+            District updatedDistrict = new District();
+            updatedDistrict.setDistrictCode(request.getDistrictCode());
+            updatedDistrict.setDistrictKh(request.getDistrictKh().trim());
+            updatedDistrict.setDistrictEn(request.getDistrictEn().trim());
+            updatedDistrict.setProvince(province);
+            districtRepository.save(updatedDistrict);
+            districtRepository.flush();
+
+            List<Commune> communes = communeRepository.findByDistrictDistrictCode(code);
+            for (Commune commune : communes) {
+                commune.setDistrict(updatedDistrict);
+            }
+            communeRepository.saveAll(communes);
+            communeRepository.flush();
+            districtRepository.delete(district);
+            districtRepository.flush();
+            return toResponse(updatedDistrict);
+        }
         district.setDistrictKh(request.getDistrictKh().trim());
         district.setDistrictEn(request.getDistrictEn().trim());
-        district.setProvince(requireProvince(request.getProvinceCode()));
+        district.setProvince(province);
         return toResponse(districtRepository.save(district));
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public void deleteDistrict(Integer code) {
         District district = requireDistrict(code);
         if (communeRepository.countByDistrictDistrictCode(code) > 0) {
@@ -123,6 +159,7 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse createCommune(CommuneRequest request) {
         ensureNewCode(communeRepository.existsById(request.getCommuneCode()), "Commune", request.getCommuneCode());
         Commune commune = new Commune();
@@ -135,12 +172,14 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'commune:' + #code")
     public AdministrativeLocationResponse getCommune(Integer code) {
         return toResponse(requireCommune(code));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'communes:' + #districtCode")
     public List<AdministrativeLocationResponse> getCommunes(Integer districtCode) {
         if (districtCode == null) {
             return communeRepository.findAll().stream().map(this::toResponse).toList();
@@ -150,16 +189,41 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse updateCommune(Integer code, CommuneRequest request) {
-        requireMatchingCode(code, request.getCommuneCode());
         Commune commune = requireCommune(code);
+        District district = requireDistrict(request.getDistrictCode());
+        if (!code.equals(request.getCommuneCode())) {
+            ensureNewCode(
+                    communeRepository.existsById(request.getCommuneCode()),
+                    "Commune",
+                    request.getCommuneCode());
+            Commune updatedCommune = new Commune();
+            updatedCommune.setCommuneCode(request.getCommuneCode());
+            updatedCommune.setCommuneKh(request.getCommuneKh().trim());
+            updatedCommune.setCommuneEn(request.getCommuneEn().trim());
+            updatedCommune.setDistrict(district);
+            communeRepository.save(updatedCommune);
+            communeRepository.flush();
+
+            List<Village> villages = villageRepository.findByCommuneCommuneCode(code);
+            for (Village village : villages) {
+                village.setCommune(updatedCommune);
+            }
+            villageRepository.saveAll(villages);
+            villageRepository.flush();
+            communeRepository.delete(commune);
+            communeRepository.flush();
+            return toResponse(updatedCommune);
+        }
+        commune.setDistrict(district);
         commune.setCommuneKh(request.getCommuneKh().trim());
         commune.setCommuneEn(request.getCommuneEn().trim());
-        commune.setDistrict(requireDistrict(request.getDistrictCode()));
         return toResponse(communeRepository.save(commune));
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public void deleteCommune(Integer code) {
         Commune commune = requireCommune(code);
         if (villageRepository.countByCommuneCommuneCode(code) > 0) {
@@ -169,6 +233,7 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse createVillage(VillageRequest request) {
         ensureNewCode(villageRepository.existsById(key(request.getVillageCode())), "Village", request.getVillageCode());
         Village village = new Village();
@@ -181,12 +246,14 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'village:' + #code")
     public AdministrativeLocationResponse getVillage(String code) {
         return toResponse(requireVillage(code));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "administrative-locations", key = "'villages:' + #communeCode")
     public List<AdministrativeLocationResponse> getVillages(Integer communeCode) {
         if (communeCode == null) {
             return villageRepository.findAll().stream().map(this::toResponse).toList();
@@ -196,16 +263,41 @@ public class AdministrativeLocationServiceImpl implements AdministrativeLocation
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public AdministrativeLocationResponse updateVillage(String code, VillageRequest request) {
-        requireMatchingCode(code, request.getVillageCode());
         Village village = requireVillage(code);
+        Commune commune = requireCommune(request.getCommuneCode());
+        if (!key(code).equals(key(request.getVillageCode()))) {
+            ensureNewCode(
+                    villageRepository.existsById(key(request.getVillageCode())),
+                    "Village",
+                    request.getVillageCode());
+            Village updatedVillage = new Village();
+            updatedVillage.setVillageCode(key(request.getVillageCode()));
+            updatedVillage.setVillageKh(request.getVillageKh().trim());
+            updatedVillage.setVillageEn(request.getVillageEn().trim());
+            updatedVillage.setCommune(commune);
+            villageRepository.save(updatedVillage);
+            villageRepository.flush();
+
+            List<User> users = userRepository.findByVillageVillageCode(key(code));
+            for (User user : users) {
+                user.setVillage(updatedVillage);
+            }
+            userRepository.saveAll(users);
+            userRepository.flush();
+            villageRepository.delete(village);
+            villageRepository.flush();
+            return toResponse(updatedVillage);
+        }
+        village.setCommune(commune);
         village.setVillageKh(request.getVillageKh().trim());
         village.setVillageEn(request.getVillageEn().trim());
-        village.setCommune(requireCommune(request.getCommuneCode()));
         return toResponse(villageRepository.save(village));
     }
 
     @Override
+    @CacheEvict(cacheNames = "administrative-locations", allEntries = true)
     public void deleteVillage(String code) {
         Village village = requireVillage(code);
         if (userRepository.countByVillageVillageCode(key(code)) > 0) {

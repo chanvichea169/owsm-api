@@ -20,10 +20,18 @@ public class UserProfile extends BaseEntity {
 
     private String firstName;
     private String lastName;
+    private String firstNameEn;
+    private String firstNameKh;
+    private String lastNameEn;
+    private String lastNameKh;
     private String phoneNumber;
     private String avatarUrl;
     private String bio;
+    private String bioEn;
+    private String bioKh;
     private String address;
+    private String addressEn;
+    private String addressKh;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")

@@ -4,10 +4,17 @@ import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
 import com.owsm.AuthService.dto.VerifyOtpRequest;
 import com.owsm.AuthService.exception.OwsmException;
+import com.owsm.AuthService.api.JwtUtil;
+import com.owsm.AuthService.model.User;
+import com.owsm.AuthService.repository.UserRepository;
+import com.owsm.AuthService.securityaudit.service.AuthSessionService;
+import com.owsm.AuthService.securityaudit.service.AuthenticationAuditService;
 import com.owsm.AuthService.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +26,10 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final AuthSessionService authSessionService;
+    private final AuthenticationAuditService authenticationAuditService;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserRequest request) {
@@ -61,6 +72,32 @@ public class UserController {
         } catch (OwsmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authorizationHeader == null
+                || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String token = authorizationHeader.substring("Bearer ".length());
+        var sessionId = jwtUtil.extractSessionId(token);
+        String principal = authentication.getName();
+        User user = userRepository.findByEmailWithLocation(principal)
+                .or(() -> userRepository.findByUsernameWithLocation(principal))
+                .orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (sessionId != null) {
+            authSessionService.revoke(sessionId, user.getId());
+        }
+        authenticationAuditService.recordLogout(user, sessionId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/resend-otp")

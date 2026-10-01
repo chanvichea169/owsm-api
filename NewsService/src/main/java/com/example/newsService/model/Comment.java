@@ -23,7 +23,11 @@ public class Comment extends BaseEntity {
     private News news;
 
     private String userName;
+    private String userNameEn;
+    private String userNameKh;
     private String userEmail;
     private String content;
+    private String contentEn;
+    private String contentKh;
     private Boolean isApproved = false;
 }

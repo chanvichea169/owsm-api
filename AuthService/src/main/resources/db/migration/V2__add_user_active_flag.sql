@@ -1,0 +1,10 @@
+ALTER TABLE tbl_users
+    ADD COLUMN IF NOT EXISTS active BOOLEAN;
+
+UPDATE tbl_users
+SET active = TRUE
+WHERE active IS NULL;
+
+ALTER TABLE tbl_users
+    ALTER COLUMN active SET DEFAULT TRUE,
+    ALTER COLUMN active SET NOT NULL;

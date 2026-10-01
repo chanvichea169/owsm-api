@@ -258,3 +258,27 @@ headers.
 ---
 
 This README will be further expanded with more details about other functionalities and setup instructions.
+
+## Authentication runtime configuration
+
+AuthService requires a persistent Base64-encoded `JWT_SECRET` that decodes to
+at least 32 bytes, plus `MAIL_USERNAME` and `MAIL_PASSWORD` for email OTP
+delivery. Do not commit these values. When using Docker Compose, copy
+`.env.example` to `.env`, generate a unique signing key in PowerShell, and set
+the SMTP credentials:
+
+```powershell
+Copy-Item .env.example .env
+$bytes = New-Object byte[] 32
+$rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
+$rng.GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+$rng.Dispose()
+```
+
+Save the generated key in `.env` as `JWT_SECRET`, then set `MAIL_USERNAME` and
+`MAIL_PASSWORD` and restart the services with
+`docker compose up -d --build auth-service gateway-service`. Keep the same JWT
+key across restarts and instances so issued tokens remain valid. Without SMTP
+credentials, password verification cannot complete because the required OTP
+cannot be delivered.

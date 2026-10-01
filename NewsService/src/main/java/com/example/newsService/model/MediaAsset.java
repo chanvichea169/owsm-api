@@ -25,6 +25,8 @@ public class MediaAsset extends BaseEntity {
     private String fileType;
     private Long fileSize;
     private String category;
+    private String categoryEn;
+    private String categoryKh;
     private String originalFileName;
     private String storedFileName;
 }

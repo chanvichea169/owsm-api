@@ -4,6 +4,7 @@ import com.example.newsService.dto.ApiResponse;
 import com.example.newsService.dto.NewsRequest;
 import com.example.newsService.dto.NewsResponse;
 import com.example.newsService.service.NewsService;
+import com.example.newsService.util.NewsDateTimeParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +38,7 @@ public class NewsController {
                                                                      @RequestParam String category,
                                                                      @RequestParam(required = false) String author,
                                                                      @RequestParam(required = false) Boolean isFeatured,
-                                                                     @RequestParam(required = false) LocalDateTime publishedAt,
+                                                                     @RequestParam(required = false) String publishedAt,
                                                                      @RequestParam(value = "file", required = false) MultipartFile file,
                                                                      @RequestParam(value = "files", required = false) List<MultipartFile> files,
                                                                      @RequestParam(value = "images", required = false) List<String> images) {
@@ -47,7 +48,7 @@ public class NewsController {
                 .category(category)
                 .author(author)
                 .isFeatured(isFeatured)
-                .publishedAt(publishedAt)
+                .publishedAt(NewsDateTimeParser.parseOptional(publishedAt))
                 .coverImage(file != null && !file.isEmpty() ? newsService.uploadFile(file) : null)
                 .images(files != null && !files.isEmpty() ? newsService.uploadFiles(files) : images)
                 .build();
@@ -87,7 +88,7 @@ public class NewsController {
                                                                      @RequestParam String category,
                                                                      @RequestParam(required = false) String author,
                                                                      @RequestParam(required = false) Boolean isFeatured,
-                                                                     @RequestParam(required = false) LocalDateTime publishedAt,
+                                                                     @RequestParam(required = false) String publishedAt,
                                                                      @RequestParam(value = "coverImage", required = false) String coverImage,
                                                                      @RequestParam(value = "file", required = false) MultipartFile file,
                                                                      @RequestParam(value = "files", required = false) List<MultipartFile> files,
@@ -98,7 +99,7 @@ public class NewsController {
                 .category(category)
                 .author(author)
                 .isFeatured(isFeatured)
-                .publishedAt(publishedAt)
+                .publishedAt(NewsDateTimeParser.parseOptional(publishedAt))
                 .coverImage(file != null && !file.isEmpty() ? newsService.uploadFile(file) : coverImage)
                 .images(files != null && !files.isEmpty() ? newsService.uploadFiles(files) : images)
                 .build();

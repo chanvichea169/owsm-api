@@ -19,9 +19,15 @@ public class News extends BaseEntity {
     private Long id;
 
     private String title;
+    private String titleEn;
+    private String titleKh;
     private String slug;
     @Column(columnDefinition = "TEXT")
     private String content;
+    @Column(name = "content_en", columnDefinition = "TEXT")
+    private String contentEn;
+    @Column(name = "content_kh", columnDefinition = "TEXT")
+    private String contentKh;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

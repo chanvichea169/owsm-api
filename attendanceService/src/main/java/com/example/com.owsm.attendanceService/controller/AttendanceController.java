@@ -30,6 +30,13 @@ public class AttendanceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(AttendanceRecordResponse.from(saved));
     }
 
+    @GetMapping("/records")
+    public List<AttendanceRecordResponse> allRecords() {
+        return attendanceService.allHistory().stream()
+            .map(AttendanceRecordResponse::from)
+            .toList();
+    }
+
     @GetMapping("/employees/{employeeId}/records")
     public List<AttendanceRecordResponse> history(@PathVariable Long employeeId) {
         return attendanceService.history(employeeId).stream().map(AttendanceRecordResponse::from).toList();

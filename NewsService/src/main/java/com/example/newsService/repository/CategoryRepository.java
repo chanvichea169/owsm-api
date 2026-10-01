@@ -10,4 +10,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findById(Long aLong);
 
     Optional<Category> findByNameIgnoreCase(String name);
+
+    Optional<Category> findBySlugIgnoreCase(String slug);
 }

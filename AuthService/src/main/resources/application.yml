@@ -1,24 +1,37 @@
   spring:
     application:
       name: owsm-auth-service
+    cache:
+      type: redis
+      redis:
+        time-to-live: 5m
+        cache-null-values: false
+    data:
+      redis:
+        host: ${SPRING_DATA_REDIS_HOST:localhost}
+        port: ${SPRING_DATA_REDIS_PORT:6379}
+        password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+    flyway:
+      enabled: true
+      baseline-on-migrate: true
+      baseline-version: 0
+      validate-on-migrate: true
 
     datasource:
       url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
-      username: ${SPRING_DATASOURCE_USERNAME:postgres}
-      password: ${SPRING_DATASOURCE_PASSWORD:123}
+      username: ${SPRING_DATASOURCE_USERNAME:}
+      password: ${SPRING_DATASOURCE_PASSWORD:}
       driver-class-name: org.postgresql.Driver
 
     jpa:
       hibernate:
         ddl-auto: update
-      defer-datasource-initialization: true
-      show-sql: true
+      show-sql: false
       properties:
         hibernate:
           format_sql: true
-          highlight_sql: true
           dialect: org.hibernate.dialect.PostgreSQLDialect
-          use_sql_comments: true
 
     mvc:
       pathmatch:
@@ -27,8 +40,8 @@
     mail:
       host: smtp.gmail.com
       port: 587
-      username: chanvichea169@gmail.com
-      password: fqtsaxyo bgilzlyr
+      username: ${MAIL_USERNAME:}
+      password: ${MAIL_PASSWORD:}
       properties:
         mail:
           smtp:
@@ -40,19 +53,15 @@
   server:
     port: ${SERVER_PORT:8081}
 
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: DEBUG
-          type:
-            descriptor:
-              sql:
-                BasicBinder: TRACE
-
   jwt:
-    secret: ${JWT_SECRET:2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c}
+    secret: ${JWT_SECRET:}
     expiration: ${JWT_EXPIRATION:86400000}
+
+  security:
+    audit:
+      trusted-proxies: ${SECURITY_AUDIT_TRUSTED_PROXIES:}
+      suspicious-failure-threshold: ${SECURITY_AUDIT_SUSPICIOUS_FAILURE_THRESHOLD:5}
+      failure-lookback-minutes: ${SECURITY_AUDIT_FAILURE_LOOKBACK_MINUTES:15}
 
   errors:
     USER_NOT_FOUND: "User not found"

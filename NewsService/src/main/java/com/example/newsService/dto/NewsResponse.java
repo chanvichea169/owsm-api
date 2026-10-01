@@ -8,7 +8,8 @@ import java.util.List;
 
 @Data
 @Builder
-public class NewsResponse {
+public class NewsResponse implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private String title;

@@ -10,6 +10,8 @@ import com.example.newsService.repository.NewsRepository;
 import com.example.newsService.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,6 +41,7 @@ public class NewsServiceImpl implements NewsService {
     private String galleryUploadDir;
 
     @Override
+    @CacheEvict(cacheNames = "news-items", allEntries = true)
     public NewsResponse create(NewsRequest request) {
         News news = News.builder()
                 .title(request.getTitle())
@@ -58,6 +61,7 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "news-items", allEntries = true)
     public NewsResponse publish(Long id) {
         News news = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("News not found"));
@@ -70,6 +74,7 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "news-items", allEntries = true)
     public NewsResponse update(Long id, NewsRequest request) {
         return repository.findById(id)
                 .map(news -> {
@@ -90,12 +95,14 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @Cacheable(cacheNames = "news-items", key = "'news:' + #id")
     public NewsResponse getById(Long id) {
         return map(repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("News not found")));
     }
 
     @Override
+    @Cacheable(cacheNames = "news-items", key = "'all'")
     public List<NewsResponse> getAll() {
         return repository.findAll()
                 .stream()
@@ -104,6 +111,7 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "news-items", allEntries = true)
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("News not found");
@@ -227,7 +235,9 @@ public class NewsServiceImpl implements NewsService {
         if (categoryName == null || categoryName.isBlank()) {
             return null;
         }
-        return categoryRepository.findByNameIgnoreCase(categoryName.trim())
+        String requestedCategory = categoryName.trim();
+        return categoryRepository.findByNameIgnoreCase(requestedCategory)
+                .or(() -> categoryRepository.findBySlugIgnoreCase(requestedCategory))
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryName));
     }
 
@@ -255,7 +265,7 @@ public class NewsServiceImpl implements NewsService {
                 .content(news.getContent())
                 .category(news.getCategory() != null ? news.getCategory().getName() : null)
                 .coverImage(news.getCoverImage())
-                .images(news.getImages())
+                .images(news.getImages() != null ? new ArrayList<>(news.getImages()) : new ArrayList<>())
                 .author(news.getAuthor() != null ? news.getAuthor().getFullName() : null)
                 .status(news.getStatus())
                 .isFeatured(news.getIsFeatured())

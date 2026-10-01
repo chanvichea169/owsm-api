@@ -22,8 +22,20 @@ public class Employee extends BaseEntity {
     @Column(nullable = false)
     private String firstName;
 
+    @Column(name = "first_name_en")
+    private String firstNameEn;
+
+    @Column(name = "first_name_kh")
+    private String firstNameKh;
+
     @Column(nullable = false)
     private String lastName;
+
+    @Column(name = "last_name_en")
+    private String lastNameEn;
+
+    @Column(name = "last_name_kh")
+    private String lastNameKh;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -74,12 +86,28 @@ public class Employee extends BaseEntity {
         this.firstName = firstName;
     }
 
+    public String getFirstNameEn() {
+        return firstNameEn;
+    }
+
+    public String getFirstNameKh() {
+        return firstNameKh;
+    }
+
     public String getLastName() {
         return lastName;
     }
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getLastNameEn() {
+        return lastNameEn;
+    }
+
+    public String getLastNameKh() {
+        return lastNameKh;
     }
 
     public String getEmail() {

@@ -12,6 +12,7 @@ public class UserResponse {
     private String username;
     private String email;
     private String streetAddress;
+    private Long departmentId;
 
     /** Email OTP verified */
     private boolean enabled;

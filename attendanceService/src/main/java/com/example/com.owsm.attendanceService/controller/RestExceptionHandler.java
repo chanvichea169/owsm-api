@@ -8,10 +8,12 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -52,6 +54,12 @@ public class RestExceptionHandler {
         return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return buildError(status, ex.getReason());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error: " + ex.getMessage());
@@ -59,6 +67,8 @@ public class RestExceptionHandler {
 
     private ResponseEntity<ApiError> buildError(HttpStatus status, String message) {
         var payload = new ApiError(status.value(), message, LocalDateTime.now());
-        return ResponseEntity.status(status).body(payload);
+        return ResponseEntity.status(status)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(payload);
     }
 }

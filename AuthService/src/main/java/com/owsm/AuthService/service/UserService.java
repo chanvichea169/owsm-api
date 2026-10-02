@@ -10,12 +10,17 @@ import java.util.Optional;
 public interface UserService {
 
     UserResponse registerUser(UserRequest request) throws OwsmException;
+    UserResponse registerAdminUser(UserRequest request) throws OwsmException;
+    UserResponse registerDepartmentUser(UserRequest request, Long departmentId) throws OwsmException;
     UserResponse loginUser(UserRequest request) throws OwsmException;
     UserResponse verifyOtp(String email, String otp) throws OwsmException;
     void resendOtp(String email) throws OwsmException;
     UserResponse updateUser(Long id, UserRequest request) throws OwsmException;
+    UserResponse updateAdminUser(Long id, UserRequest request) throws OwsmException;
+    UserResponse updateDepartmentUser(Long id, UserRequest request, Long departmentId) throws OwsmException;
     Optional<UserResponse> getUserById(Long id);
     List<UserResponse> getAllUsers();
+    List<UserResponse> getUsersByDepartmentId(Long departmentId);
     void deleteUser(Long id) throws OwsmException;
 
     void changePassword(Long id, String currentPassword, String newPassword) throws OwsmException;

@@ -3,19 +3,27 @@ package com.owsm.AuthService.service.serviceImpl;
 import com.owsm.AuthService.api.JwtUtil;
 import com.owsm.AuthService.dto.UserRequest;
 import com.owsm.AuthService.dto.UserResponse;
+import com.owsm.AuthService.enumeration.RoleName;
 import com.owsm.AuthService.exception.OwsmException;
 import com.owsm.AuthService.model.Role;
 import com.owsm.AuthService.model.User;
 import com.owsm.AuthService.model.Village;
 import com.owsm.AuthService.repository.RoleRepository;
+import com.owsm.AuthService.repository.TelegramLinkTokenRepository;
+import com.owsm.AuthService.repository.UserMenuConfigurationRepository;
+import com.owsm.AuthService.repository.UserNotificationRepository;
+import com.owsm.AuthService.repository.UserProfileRepository;
 import com.owsm.AuthService.repository.UserRepository;
 import com.owsm.AuthService.service.UserService;
+import com.owsm.AuthService.service.TelegramBotClient;
 import com.owsm.AuthService.service.handler.UserServiceHandler;
 import com.owsm.AuthService.securityaudit.enumeration.LoginStatus;
 import com.owsm.AuthService.securityaudit.enumeration.SecurityEventStatus;
 import com.owsm.AuthService.securityaudit.enumeration.SecurityEventType;
 import com.owsm.AuthService.securityaudit.service.AuthSessionService;
 import com.owsm.AuthService.securityaudit.service.AuthenticationAuditService;
+import com.owsm.AuthService.securityaudit.repository.AuthDeviceRepository;
+import com.owsm.AuthService.securityaudit.repository.AuthSessionRepository;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,11 +60,45 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final AuthenticationAuditService authenticationAuditService;
     private final AuthSessionService authSessionService;
+    private final TelegramBotClient telegramBotClient;
+    private final UserProfileRepository userProfileRepository;
+    private final UserMenuConfigurationRepository userMenuConfigurationRepository;
+    private final UserNotificationRepository userNotificationRepository;
+    private final TelegramLinkTokenRepository telegramLinkTokenRepository;
+    private final AuthSessionRepository authSessionRepository;
+    private final AuthDeviceRepository authDeviceRepository;
 
     // ================= REGISTER =================
 
     @Override
     public UserResponse registerUser(UserRequest request) throws OwsmException {
+        return registerUser(request, false);
+    }
+
+    @Override
+    public UserResponse registerAdminUser(UserRequest request) throws OwsmException {
+        return registerUser(request, true);
+    }
+
+    @Override
+    public UserResponse registerDepartmentUser(UserRequest request, Long departmentId) throws OwsmException {
+        if (departmentId == null || departmentId <= 0) {
+            throw new IllegalArgumentException("A department is required");
+        }
+        if (request.getRoleId() == null) {
+            throw new IllegalArgumentException("A role is required");
+        }
+        Role role = roleRepository.findById(Long.valueOf(request.getRoleId()))
+                .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
+        if (role.getName() == RoleName.ADMIN) {
+            throw new IllegalArgumentException("Department managers cannot create Admin users");
+        }
+        request.setDepartmentId(departmentId);
+        return registerUser(request, true);
+    }
+
+    private UserResponse registerUser(UserRequest request, boolean allowDepartmentAssignment)
+            throws OwsmException {
 
         userServiceHandler.validateUsername(request.getUsername());
         userServiceHandler.validateEmail(request.getEmail());
@@ -73,10 +115,19 @@ public class UserServiceImpl implements UserService {
         User user = userServiceHandler.convertToUser(request);
         user.setEmail(email);
 
-        if (request.getRoleId() != null) {
+        if (allowDepartmentAssignment && request.getRoleId() != null) {
             Role role = roleRepository.findById(Long.valueOf(request.getRoleId()))
                     .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
             user.setRole(role);
+        }
+        if (allowDepartmentAssignment) {
+            validateDepartmentAssignment(user.getRole(), request.getDepartmentId());
+            user.setDepartmentId(request.getDepartmentId());
+        } else {
+            Role selfRegistrationRole = roleRepository.findByName(RoleName.USER)
+                    .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
+            user.setRole(selfRegistrationRole);
+            user.setDepartmentId(null);
         }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -157,19 +208,31 @@ public class UserServiceImpl implements UserService {
             throw new OwsmException("ACCOUNT_DISABLED");
         }
 
+        String otpChannel = request.getOtpChannel() == null || request.getOtpChannel().isBlank()
+                ? "EMAIL"
+                : request.getOtpChannel().trim().toUpperCase(java.util.Locale.ROOT);
+        if (!otpChannel.equals("EMAIL") && !otpChannel.equals("TELEGRAM")) {
+            throw new OwsmException("INVALID_OTP_CHANNEL");
+        }
+        if (otpChannel.equals("TELEGRAM")
+                && (user.getTelegramChatId() == null || user.getTelegramChatId().isBlank())) {
+            throw new OwsmException("TELEGRAM_NOT_LINKED");
+        }
+
         // Always send a fresh OTP — never issue a token directly from login
         user.setOtp(generateOtp());
         user.setOtpCreatedAt(LocalDateTime.now());
+        user.setOtpDeliveryChannel(otpChannel);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        if (!sendOtpEmail(user.getEmail(), user.getOtp())) {
+        if (!sendLoginOtp(user)) {
             authenticationAuditService.recordLoginAttempt(
                     user,
                     loginIdentifier,
                     LoginStatus.FAILED,
                     "One-time code delivery failed",
-                    "EMAIL_OTP",
+                    otpChannel + "_OTP",
                     null,
                     null);
             throw new OwsmException("OTP_DELIVERY_FAILED");
@@ -256,7 +319,7 @@ public class UserServiceImpl implements UserService {
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(user.getUsername());
         AuthSessionService.SessionIdentifiers session = authSessionService.create(user);
-        String token = jwtUtil.generateToken(userDetails, session.sessionId(), session.tokenId());
+        String token = jwtUtil.generateToken(userDetails, user, session.sessionId(), session.tokenId());
 
         authenticationAuditService.recordLoginAttempt(
                 user,
@@ -300,7 +363,24 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        sendOtpEmail(user.getEmail(), user.getOtp());
+        if (!sendLoginOtp(user)) {
+            throw new OwsmException("OTP_DELIVERY_FAILED");
+        }
+    }
+
+    private boolean sendLoginOtp(User user) {
+        if ("TELEGRAM".equalsIgnoreCase(user.getOtpDeliveryChannel())) {
+            try {
+                telegramBotClient.sendMessage(
+                        user.getTelegramChatId(),
+                        "Your OWSM login verification code is: " + user.getOtp());
+                return true;
+            } catch (RuntimeException exception) {
+                log.warn("Telegram OTP delivery failed for user id {}", user.getId());
+                return false;
+            }
+        }
+        return sendOtpEmail(user.getEmail(), user.getOtp());
     }
 
     // ================= UPDATE USER =================
@@ -353,6 +433,73 @@ public class UserServiceImpl implements UserService {
         return userServiceHandler.convertToUserResponse(user);
     }
 
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public UserResponse updateAdminUser(Long id, UserRequest request) throws OwsmException {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+        Long currentDepartmentId = existingUser.getDepartmentId();
+        Long currentRoleId = existingUser.getRole() == null
+                ? null
+                : existingUser.getRole().getId();
+        updateUser(id, request);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+        validateDepartmentAssignment(user.getRole(), request.getDepartmentId());
+        user.setDepartmentId(request.getDepartmentId());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+        Long updatedRoleId = user.getRole() == null ? null : user.getRole().getId();
+        if (!java.util.Objects.equals(currentDepartmentId, request.getDepartmentId())
+                || !java.util.Objects.equals(currentRoleId, updatedRoleId)) {
+            authSessionService.revokeAll(id);
+        }
+        return userServiceHandler.convertToUserResponse(user);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public UserResponse updateDepartmentUser(Long id, UserRequest request, Long departmentId)
+            throws OwsmException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
+        if (!java.util.Objects.equals(user.getDepartmentId(), departmentId)
+                || user.getRole() == null
+                || user.getRole().getName() == RoleName.ADMIN) {
+            throw new IllegalArgumentException("User does not belong to your department");
+        }
+        if (request.getDepartmentId() != null
+                && !java.util.Objects.equals(request.getDepartmentId(), departmentId)) {
+            throw new IllegalArgumentException("Users cannot be moved to another department");
+        }
+        Long previousRoleId = user.getRole().getId();
+        if (request.getRoleId() != null) {
+            Role requestedRole = roleRepository.findById(Long.valueOf(request.getRoleId()))
+                    .orElseThrow(() -> new OwsmException("ROLE_NOT_FOUND"));
+            if (requestedRole.getName() == RoleName.ADMIN) {
+                throw new IllegalArgumentException("Department managers cannot assign the Admin role");
+            }
+        }
+        UserResponse updated = updateUser(id, request);
+        if (!java.util.Objects.equals(previousRoleId, request.getRoleId())) {
+            authSessionService.revokeAll(id);
+        }
+        return updated;
+    }
+
+    private void validateDepartmentAssignment(Role role, Long departmentId) {
+        if (role == null || role.getName() == null) {
+            throw new IllegalArgumentException("A role is required for department assignment");
+        }
+        boolean adminRole = role.getName() == com.owsm.AuthService.enumeration.RoleName.ADMIN;
+        if (!adminRole && departmentId == null) {
+            throw new IllegalArgumentException("A department is required for non-admin users");
+        }
+        if (adminRole && departmentId != null) {
+            throw new IllegalArgumentException("Admin users cannot be assigned to a department");
+        }
+    }
+
     // ================= DELETE =================
 
     @Override
@@ -365,7 +512,19 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new OwsmException("USER_NOT_FOUND"));
 
+        // Clear rows that belong to this account before deleting it so foreign
+        // keys can never block the delete. Audit history (login_audit and
+        // security_audit) is intentionally preserved — those rows keep the event
+        // with a null user reference.
+        userProfileRepository.deleteAllByUserId(id);
+        userNotificationRepository.deleteAllByRecipientId(id);
+        telegramLinkTokenRepository.deleteAllByUserId(id);
+        userMenuConfigurationRepository.deleteAllByUserId(id);
+        authSessionRepository.deleteAllByUserId(id);
+        authDeviceRepository.deleteAllByUserId(id);
+
         userRepository.delete(user);
+        userRepository.flush();
     }
 
     // ================= GET =================
@@ -379,6 +538,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
+                .map(userServiceHandler::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getUsersByDepartmentId(Long departmentId) {
+        return userRepository.findByDepartmentId(departmentId).stream()
                 .map(userServiceHandler::convertToUserResponse)
                 .collect(Collectors.toList());
     }

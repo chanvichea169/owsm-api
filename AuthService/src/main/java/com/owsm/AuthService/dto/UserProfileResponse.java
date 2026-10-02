@@ -44,5 +44,7 @@ public class UserProfileResponse {
     public static class UserInnerResponse {
         private Long id;
         private String email;
+        private Long departmentId;
+        private String roleName;
     }
 }

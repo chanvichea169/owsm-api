@@ -4,6 +4,7 @@ import com.example.newsService.dto.ApiResponse;
 import com.example.newsService.dto.NewsRequest;
 import com.example.newsService.dto.NewsResponse;
 import com.example.newsService.service.NewsService;
+import com.example.newsService.service.TelegramAlertService;
 import com.example.newsService.util.NewsDateTimeParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,6 +26,7 @@ import java.util.List;
 @Tag(name = "News", description = "Operations related to news lifecycle")
 public class NewsController {
     private final NewsService newsService;
+    private final TelegramAlertService telegramAlertService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<NewsResponse>> create(@Valid @RequestBody NewsRequest request) {
@@ -109,6 +111,10 @@ public class NewsController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         newsService.delete(id);
+        telegramAlertService.destructiveAction(
+                "News article deleted",
+                "news id: " + id,
+                "news admin");
         return ResponseEntity.noContent().build();
     }
 

@@ -5,9 +5,11 @@ import com.example.attendanceService.dto.CreateOfficeRequest;
 import com.example.attendanceService.dto.UpdateOfficeRequest;
 import com.example.attendanceService.model.Company;
 import com.example.attendanceService.model.Office;
+import com.example.attendanceService.repository.EmployeeRepository;
 import com.example.attendanceService.repository.OfficeRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -15,10 +17,16 @@ public class OfficeService {
 
     private final OfficeRepository officeRepository;
     private final CompanyService companyService;
+    private final EmployeeRepository employeeRepository;
 
-    public OfficeService(OfficeRepository officeRepository, CompanyService companyService) {
+    public OfficeService(
+        OfficeRepository officeRepository,
+        CompanyService companyService,
+        EmployeeRepository employeeRepository
+    ) {
         this.officeRepository = officeRepository;
         this.companyService = companyService;
+        this.employeeRepository = employeeRepository;
     }
 
     public Office createOffice(Long companyId, CreateOfficeRequest request) {
@@ -69,8 +77,12 @@ public class OfficeService {
     return officeRepository.save(office);
   }
 
+  @Transactional
   public void deleteOffice(Long companyId, Long officeId) {
     Office office = getByCompany(companyId, officeId);
+    /* Employees keep their job but lose the office link, so the office row can
+       be removed without a foreign-key violation. */
+    employeeRepository.detachOffice(officeId);
     officeRepository.delete(office);
   }
 }

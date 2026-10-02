@@ -4,6 +4,7 @@ import com.example.newsService.dto.ApiResponse;
 import com.example.newsService.dto.CategoryRequest;
 import com.example.newsService.dto.CategoryResponse;
 import com.example.newsService.service.CategoryService;
+import com.example.newsService.service.TelegramAlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.List;
 public class CategoryController {
 
     private final CategoryService categoryService;
+    private final TelegramAlertService telegramAlertService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CategoryRequest request) {
@@ -45,6 +47,10 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);
+        telegramAlertService.destructiveAction(
+                "Category deleted",
+                "category id: " + id,
+                "news admin");
         return ResponseEntity.noContent().build();
     }
 

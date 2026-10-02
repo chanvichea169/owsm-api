@@ -1,5 +1,4 @@
 services:
-
   postgres:
     image: postgres:15
     container_name: postgres
@@ -59,13 +58,28 @@ services:
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}"]
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+        "--requirepass",
+        "${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}",
+      ]
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping 2>/dev/null | grep -q PONG"]
+      test:
+        [
+          "CMD-SHELL",
+          'redis-cli -a "$${REDIS_PASSWORD}" ping 2>/dev/null | grep -q PONG',
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -94,6 +108,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:-}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
@@ -115,14 +131,21 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      auth-service:
+        condition: service_started
 
     ports:
       - "8083:8083"
+    volumes:
+      - attendance-uploads:/app/uploads
 
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/attendance_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123
+      AUTH_SERVICE_URI: http://auth-service:8081
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:-}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
@@ -152,6 +175,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/news_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:-}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the ignored .env file}
@@ -179,9 +204,9 @@ services:
 
       # This forces your specific configuration properties to override everything else directly
       SPRING_APPLICATION_JSON: '{
-          "auth.service.uri": "http://auth-service:8081",
-          "attendance.service.uri": "http://attendance-service:8083",
-          "news.service.uri": "http://news-service:8082"
+        "auth.service.uri": "http://auth-service:8081",
+        "attendance.service.uri": "http://attendance-service:8083",
+        "news.service.uri": "http://news-service:8082"
         }'
     restart: always
     networks:
@@ -213,6 +238,7 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  attendance-uploads:
 
 networks:
   backend:

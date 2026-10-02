@@ -54,6 +54,11 @@ public class AuthSessionService {
         return true;
     }
 
+    @Transactional
+    public int revokeAll(Long userId) {
+        return authSessionRepository.revokeAllActiveByUserId(userId, Instant.now());
+    }
+
     @Transactional(readOnly = true)
     public boolean isActive(UUID sessionId, UUID tokenId, Instant now) {
         return authSessionRepository

@@ -6,6 +6,8 @@ import com.example.newsService.exception.ResourceNotFoundException;
 import com.example.newsService.model.*;
 import com.example.newsService.repository.AuthorRepository;
 import com.example.newsService.repository.CategoryRepository;
+import com.example.newsService.repository.CommentRepository;
+import com.example.newsService.repository.MediaAssetRepository;
 import com.example.newsService.repository.NewsRepository;
 import com.example.newsService.service.NewsService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -32,6 +35,8 @@ public class NewsServiceImpl implements NewsService {
     private final NewsRepository repository;
     private final CategoryRepository categoryRepository;
     private final AuthorRepository authorRepository;
+    private final CommentRepository commentRepository;
+    private final MediaAssetRepository mediaAssetRepository;
     private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
 
     @Value("${app.file.news-dir:uploads/news}")
@@ -112,11 +117,19 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @CacheEvict(cacheNames = "news-items", allEntries = true)
+    @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("News not found");
         }
-        repository.deleteById(id);
+        /* No foreign key cascades, so every row that references this article is
+           cleared first: comments and media assets are removed outright, while
+           the tag links and gallery images belong to the article. */
+        commentRepository.deleteAllByNewsId(id);
+        mediaAssetRepository.deleteAllByNewsId(id);
+        repository.deleteNewsTags(id);
+        repository.deleteNewsImages(id);
+        repository.deleteNewsRow(id);
     }
 
     @Override

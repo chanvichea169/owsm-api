@@ -58,3 +58,8 @@ logging:
           descriptor:
             sql:
               BasicBinder: TRACE
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    alert-chat-id: ${TELEGRAM_ALERT_CHAT_ID:}

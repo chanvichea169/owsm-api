@@ -7,10 +7,14 @@ import com.example.attendanceService.dto.EmployeeResponse;
 import com.example.attendanceService.dto.UpdateEmployeeRequest;
 import com.example.attendanceService.model.UserRole;
 import com.example.attendanceService.service.EmployeeService;
-import com.example.attendanceService.service.RoleAuthorizationService;
+import com.example.attendanceService.service.DepartmentAccessService;
+import com.example.attendanceService.service.QrCodeService;
+import com.example.attendanceService.service.TelegramAlertService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,19 +32,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-    private final RoleAuthorizationService roleAuthorizationService;
+    private final DepartmentAccessService departmentAccessService;
+    private final TelegramAlertService telegramAlertService;
+    private final QrCodeService qrCodeService;
 
-    public EmployeeController(EmployeeService employeeService, RoleAuthorizationService roleAuthorizationService) {
+    public EmployeeController(
+        EmployeeService employeeService,
+        DepartmentAccessService departmentAccessService,
+        TelegramAlertService telegramAlertService,
+        QrCodeService qrCodeService
+    ) {
         this.employeeService = employeeService;
-        this.roleAuthorizationService = roleAuthorizationService;
+        this.departmentAccessService = departmentAccessService;
+        this.telegramAlertService = telegramAlertService;
+        this.qrCodeService = qrCodeService;
     }
 
     @PostMapping
     public ResponseEntity<EmployeeResponse> create(
-        @RequestHeader(value = "X-User-Roles", required = false) String roles,
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @Valid @RequestBody CreateEmployeeRequest request
     ) {
-        roleAuthorizationService.requireAnyRole(roles, UserRole.ADMIN, UserRole.HR, UserRole.HEAD_OF_DEPARTMENT);
+        var context = departmentAccessService.authenticate(authorization);
+        departmentAccessService.requireDepartmentManagement(context, request.companyId());
         var employee = employeeService.registerEmployee(request);
         return ResponseEntity.created(URI.create("/api/employees/" + employee.getId()))
             .body(EmployeeResponse.from(employee));
@@ -62,33 +76,80 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}")
-    public EmployeeResponse get(@PathVariable Long employeeId) {
-        return EmployeeResponse.from(employeeService.getEmployee(employeeId));
+    public EmployeeResponse get(
+        @PathVariable Long employeeId,
+        @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        var employee = employeeService.getEmployee(employeeId);
+        departmentAccessService.requireDepartmentScope(
+            departmentAccessService.authenticate(authorization),
+            employee.getCompany().getId()
+        );
+        return EmployeeResponse.from(employee);
+    }
+
+    /**
+     * Renders the employee's attendance QR badge as a PNG image. The QR encodes
+     * the employee's stable badge code, which the kiosk scanner resolves.
+     */
+    @GetMapping("/{employeeId}/qr")
+    public ResponseEntity<byte[]> qrCode(
+        @PathVariable Long employeeId,
+        @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        var employee = employeeService.getEmployee(employeeId);
+        departmentAccessService.requireDepartmentScope(
+            departmentAccessService.authenticate(authorization),
+            employee.getCompany().getId()
+        );
+        String badgeCode = employeeService.ensureAttendanceCode(employee);
+        byte[] png = qrCodeService.generatePng(badgeCode, 512);
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_PNG)
+            .header(HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(png);
     }
 
     @GetMapping
-    public List<EmployeeResponse> list(@RequestParam(required = false) Long companyId) {
-        return (companyId == null ? employeeService.listAll() : employeeService.listByCompany(companyId))
+    public List<EmployeeResponse> list(
+        @RequestParam(required = false) Long companyId,
+        @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        var context = departmentAccessService.authenticate(authorization);
+        Long scopedCompanyId = departmentAccessService.requireDepartmentScope(context, companyId);
+        return (scopedCompanyId == null ? employeeService.listAll() : employeeService.listByCompany(scopedCompanyId))
             .stream().map(EmployeeResponse::from).toList();
     }
 
     @PutMapping("/{employeeId}")
     public EmployeeResponse update(
         @PathVariable Long employeeId,
-        @RequestHeader(value = "X-User-Roles", required = false) String roles,
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @RequestBody UpdateEmployeeRequest request
     ) {
-        roleAuthorizationService.requireAnyRole(roles, UserRole.ADMIN, UserRole.HR, UserRole.HEAD_OF_DEPARTMENT);
+        var context = departmentAccessService.authenticate(authorization);
+        var currentEmployee = employeeService.getEmployee(employeeId);
+        departmentAccessService.requireDepartmentManagement(context, currentEmployee.getCompany().getId());
+        if (request.companyId() != null) {
+            departmentAccessService.requireDepartmentManagement(context, request.companyId());
+        }
         return EmployeeResponse.from(employeeService.updateEmployee(employeeId, request));
     }
 
     @DeleteMapping("/{employeeId}")
     public ResponseEntity<Void> delete(
         @PathVariable Long employeeId,
-        @RequestHeader(value = "X-User-Roles", required = false) String roles
+        @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        roleAuthorizationService.requireAnyRole(roles, UserRole.ADMIN, UserRole.HR, UserRole.HEAD_OF_DEPARTMENT);
+        var context = departmentAccessService.authenticate(authorization);
+        var employee = employeeService.getEmployee(employeeId);
+        departmentAccessService.requireDepartmentManagement(context, employee.getCompany().getId());
         employeeService.deleteEmployee(employeeId);
+        telegramAlertService.destructiveAction(
+            "Employee deleted",
+            "employee id: " + employeeId + "\ncompany id: " + employee.getCompany().getId(),
+            "department management"
+        );
         return ResponseEntity.noContent().build();
     }
 }

@@ -40,6 +40,9 @@ public class Company extends BaseEntity {
 
     private String email;
 
+    @Column(name = "logo_path")
+    private String logoPath;
+
     public Company() {
     }
 
@@ -106,5 +109,13 @@ public class Company extends BaseEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getLogoPath() {
+        return logoPath;
+    }
+
+    public void setLogoPath(String logoPath) {
+        this.logoPath = logoPath;
     }
 }

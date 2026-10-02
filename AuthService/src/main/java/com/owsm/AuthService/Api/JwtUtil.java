@@ -49,9 +49,23 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails, UUID sessionId, UUID tokenId) {
+        return generateToken(userDetails, null, sessionId, tokenId);
+    }
+
+    public String generateToken(UserDetails userDetails, com.owsm.AuthService.model.User user,
+                                UUID sessionId, UUID tokenId) {
         Map<String, Object> claims = new HashMap<>();
         if (sessionId != null) {
             claims.put("sid", sessionId.toString());
+        }
+        if (user != null) {
+            claims.put("userId", user.getId());
+            if (user.getRole() != null && user.getRole().getName() != null) {
+                claims.put("role", user.getRole().getName().name());
+            }
+            if (user.getDepartmentId() != null) {
+                claims.put("departmentId", user.getDepartmentId());
+            }
         }
         var builder = Jwts.builder()
                 .setClaims(claims)

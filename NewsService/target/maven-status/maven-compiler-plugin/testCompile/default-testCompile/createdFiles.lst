@@ -1,3 +1,5 @@
+com\example\newsService\service\serviceImpl\CategoryServiceImplDeleteTests.class
 com\example\newsService\NewsServiceApplicationTests.class
 com\example\newsService\service\serviceImpl\NewsServiceImplTest.class
 com\example\newsService\util\NewsDateTimeParserTest.class
+com\example\newsService\service\serviceImpl\NewsServiceImplDeleteTests.class

@@ -14,9 +14,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Existing Auth methods
     Optional<User> findByEmail(String email);
+        boolean existsByTelegramChatIdAndIdNot(String telegramChatId, Long id);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
     Optional<User> findByUsername(String username);
+    List<User> findByDepartmentId(Long departmentId);
     @Query("SELECT u FROM User u " +
             "LEFT JOIN FETCH u.village v " +
             "LEFT JOIN FETCH v.commune c " +

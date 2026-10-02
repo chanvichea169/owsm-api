@@ -90,6 +90,7 @@ public class UserServiceHandler {
         userResponse.setEnabled(user.isEnabled());
         userResponse.setActive(user.isActive());
         userResponse.setStreetAddress(user.getStreetAddress());
+        userResponse.setDepartmentId(user.getDepartmentId());
 
         if (user.getRole() != null) {
             RoleResponse roleResponse = new RoleResponse();

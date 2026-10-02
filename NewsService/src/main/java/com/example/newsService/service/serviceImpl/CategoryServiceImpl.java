@@ -5,11 +5,13 @@ import com.example.newsService.dto.CategoryResponse;
 import com.example.newsService.exception.ResourceNotFoundException;
 import com.example.newsService.model.Category;
 import com.example.newsService.repository.CategoryRepository;
+import com.example.newsService.repository.NewsRepository;
 import com.example.newsService.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository repository;
+    private final NewsRepository newsRepository;
 
     @Override
     @CacheEvict(cacheNames = {"news-categories", "news-items"}, allEntries = true)
@@ -63,10 +66,16 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @CacheEvict(cacheNames = {"news-categories", "news-items"}, allEntries = true)
+    @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Category not found");
         }
+        /* Articles keep their content but lose the category link, and
+           sub-categories are promoted to top level, so the foreign keys never
+           block the delete. */
+        newsRepository.detachCategory(id);
+        repository.detachChildren(id);
         repository.deleteById(id);
     }
 

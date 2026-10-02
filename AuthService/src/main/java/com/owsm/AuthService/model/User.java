@@ -30,9 +30,18 @@ public class User {
     @Column(name = "otp_created_at")
     private LocalDateTime otpCreatedAt;
 
+    @Column(name = "telegram_chat_id", length = 64)
+    private String telegramChatId;
+
+    @Column(name = "otp_delivery_channel", nullable = false, length = 16)
+    private String otpDeliveryChannel = "EMAIL";
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
+
+    @Column(name = "department_id")
+    private Long departmentId;
 
     /** Specific address detail (e.g., House No, Street No) */
     @Column(name = "street_address")

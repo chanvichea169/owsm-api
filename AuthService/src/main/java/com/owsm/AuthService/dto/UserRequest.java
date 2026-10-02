@@ -10,7 +10,9 @@ public class UserRequest {
     private String username;
     private String email;
     private String password;
+    private String otpChannel = "EMAIL";
     private Integer roleId;
+    private Long departmentId;
     private String streetAddress;
     private String villageCode;
 }

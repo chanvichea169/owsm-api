@@ -23,6 +23,7 @@ public class GatewayConfig {
         return builder.routes()
                 .route("auth-service", r -> r
                         .path("/api/users/**", "/api/roles/**", "/api/profile/**", "/api/locations/**",
+                                "/api/notifications/**",
                                 "/api/security/**", "/api/menu-access/**", "/api/sidebar-menus",
                                 "/api/sidebar-menus/**",
                                 "/uploads/profiles/**")

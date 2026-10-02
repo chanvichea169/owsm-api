@@ -6,6 +6,7 @@ import com.owsm.AuthService.dto.DistrictRequest;
 import com.owsm.AuthService.dto.ProvinceRequest;
 import com.owsm.AuthService.dto.VillageRequest;
 import com.owsm.AuthService.service.AdministrativeLocationService;
+import com.owsm.AuthService.service.TelegramAlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 public class AdministrativeLocationController {
 
     private final AdministrativeLocationService locationService;
+    private final TelegramAlertService telegramAlertService;
 
     @PostMapping("/provinces")
     public ResponseEntity<AdministrativeLocationResponse> createProvince(@Valid @RequestBody ProvinceRequest request) {
@@ -50,6 +52,10 @@ public class AdministrativeLocationController {
     @DeleteMapping("/provinces/{code}")
     public ResponseEntity<Void> deleteProvince(@PathVariable Integer code) {
         locationService.deleteProvince(code);
+        telegramAlertService.destructiveAction(
+                "Location deleted",
+                "province code: " + code,
+                telegramAlertService.currentActor());
         return ResponseEntity.noContent().build();
     }
 
@@ -82,6 +88,10 @@ public class AdministrativeLocationController {
     @DeleteMapping("/districts/{code}")
     public ResponseEntity<Void> deleteDistrict(@PathVariable Integer code) {
         locationService.deleteDistrict(code);
+        telegramAlertService.destructiveAction(
+                "Location deleted",
+                "district code: " + code,
+                telegramAlertService.currentActor());
         return ResponseEntity.noContent().build();
     }
 
@@ -114,6 +124,10 @@ public class AdministrativeLocationController {
     @DeleteMapping("/communes/{code}")
     public ResponseEntity<Void> deleteCommune(@PathVariable Integer code) {
         locationService.deleteCommune(code);
+        telegramAlertService.destructiveAction(
+                "Location deleted",
+                "commune code: " + code,
+                telegramAlertService.currentActor());
         return ResponseEntity.noContent().build();
     }
 
@@ -141,6 +155,10 @@ public class AdministrativeLocationController {
     @DeleteMapping("/villages/{code}")
     public ResponseEntity<Void> deleteVillage(@PathVariable String code) {
         locationService.deleteVillage(code);
+        telegramAlertService.destructiveAction(
+                "Location deleted",
+                "village code: " + code,
+                telegramAlertService.currentActor());
         return ResponseEntity.noContent().build();
     }
 }

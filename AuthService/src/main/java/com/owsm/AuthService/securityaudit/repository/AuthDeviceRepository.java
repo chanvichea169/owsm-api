@@ -4,6 +4,9 @@ import com.owsm.AuthService.securityaudit.entity.AuthDevice;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +17,8 @@ public interface AuthDeviceRepository extends JpaRepository<AuthDevice, UUID> {
     List<AuthDevice> findByUser_IdAndRevokedAtIsNull(Long userId);
     Optional<AuthDevice> findByUser_IdAndDeviceId(Long userId, UUID deviceId);
     long countByUser_IdAndRevokedAtIsNull(Long userId);
+
+    @Modifying
+    @Query("delete from AuthDevice device where device.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

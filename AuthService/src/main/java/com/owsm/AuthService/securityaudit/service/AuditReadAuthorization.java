@@ -13,10 +13,9 @@ public class AuditReadAuthorization {
         boolean authorized = authentication != null
                 && authentication.isAuthenticated()
                 && authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ADMIN".equals(authority.getAuthority())
-                        || "HEAD_OF_DEPARTMENT".equals(authority.getAuthority()));
+                .anyMatch(authority -> "ADMIN".equals(authority.getAuthority()));
         if (!authorized) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient authority");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin role required");
         }
     }
 }

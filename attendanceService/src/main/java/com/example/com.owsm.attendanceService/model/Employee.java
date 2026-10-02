@@ -51,6 +51,13 @@ public class Employee extends BaseEntity {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean requiresPasswordChange = false;
 
+    /**
+     * Stable, unique badge identifier printed inside the employee attendance QR
+     * code. Kiosk scanners resolve an employee from this value.
+     */
+    @Column(name = "attendance_code", unique = true, length = 40)
+    private String attendanceCode;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
@@ -68,6 +75,14 @@ public class Employee extends BaseEntity {
 
     public void setRequiresPasswordChange(boolean requiresPasswordChange) {
         this.requiresPasswordChange = requiresPasswordChange;
+    }
+
+    public String getAttendanceCode() {
+        return attendanceCode;
+    }
+
+    public void setAttendanceCode(String attendanceCode) {
+        this.attendanceCode = attendanceCode;
     }
 
     public Long getId() {

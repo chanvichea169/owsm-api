@@ -1,8 +1,16 @@
+com\owsm\AuthService\service\NotificationServiceTest.class
+com\owsm\AuthService\service\serviceImpl\UserServiceImplDeleteTests.class
 com\owsm\AuthService\UserProfileEmailTests.class
+com\owsm\AuthService\controller\UserMenuAccessControllerTest.class
+com\owsm\AuthService\controller\UserControllerCurrentAccessTest.class
+com\owsm\AuthService\service\RolePermissionServiceTest.class
 com\owsm\AuthService\AdministrativeLocationServiceTests.class
+com\owsm\AuthService\service\TelegramAlertServiceTest.class
+com\owsm\AuthService\UserLocationMappingTests.class
+com\owsm\AuthService\service\TelegramLinkServiceTest.class
+com\owsm\AuthService\service\TelegramPollingServiceTest.class
 com\owsm\AuthService\OWSMApplicationTests.class
 com\owsm\AuthService\service\SidebarMenuServiceTest.class
 com\owsm\AuthService\service\UserMenuAccessServiceTest.class
 com\owsm\AuthService\ClientRequestInfoExtractorTests.class
-com\owsm\AuthService\UserLocationMappingTests.class
 com\owsm\AuthService\service\RoleMenuAccessServiceTest.class

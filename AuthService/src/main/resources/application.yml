@@ -1,73 +1,83 @@
-  spring:
-    application:
-      name: owsm-auth-service
-    cache:
-      type: redis
-      redis:
-        time-to-live: 5m
-        cache-null-values: false
-    data:
-      redis:
-        host: ${SPRING_DATA_REDIS_HOST:localhost}
-        port: ${SPRING_DATA_REDIS_PORT:6379}
-        password: ${SPRING_DATA_REDIS_PASSWORD:}
+spring:
+  application:
+    name: owsm-auth-service
+  cache:
+    type: redis
+    redis:
+      time-to-live: 5m
+      cache-null-values: false
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
-    flyway:
-      enabled: true
-      baseline-on-migrate: true
-      baseline-version: 0
-      validate-on-migrate: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
 
-    datasource:
-      url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
-      username: ${SPRING_DATASOURCE_USERNAME:}
-      password: ${SPRING_DATASOURCE_PASSWORD:}
-      driver-class-name: org.postgresql.Driver
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
 
-    jpa:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: false
-      properties:
-        hibernate:
-          format_sql: true
-          dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-    mvc:
-      pathmatch:
-        matching-strategy: ant_path_matcher
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 
-    mail:
-      host: smtp.gmail.com
-      port: 587
-      username: ${MAIL_USERNAME:}
-      password: ${MAIL_PASSWORD:}
-      properties:
-        mail:
-          smtp:
-            auth: true
-            starttls:
-              enable: true
-              required: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
-  server:
-    port: ${SERVER_PORT:8081}
+server:
+  port: ${SERVER_PORT:8081}
 
-  jwt:
-    secret: ${JWT_SECRET:}
-    expiration: ${JWT_EXPIRATION:86400000}
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: ${JWT_EXPIRATION:86400000}
 
-  security:
-    audit:
-      trusted-proxies: ${SECURITY_AUDIT_TRUSTED_PROXIES:}
-      suspicious-failure-threshold: ${SECURITY_AUDIT_SUSPICIOUS_FAILURE_THRESHOLD:5}
-      failure-lookback-minutes: ${SECURITY_AUDIT_FAILURE_LOOKBACK_MINUTES:15}
+security:
+  audit:
+    trusted-proxies: ${SECURITY_AUDIT_TRUSTED_PROXIES:}
+    suspicious-failure-threshold: ${SECURITY_AUDIT_SUSPICIOUS_FAILURE_THRESHOLD:5}
+    failure-lookback-minutes: ${SECURITY_AUDIT_FAILURE_LOOKBACK_MINUTES:15}
 
-  errors:
-    USER_NOT_FOUND: "User not found"
-    EMAIL_ALREADY_EXISTS: "Email already exists"
-    INVALID_CREDENTIALS: "Invalid credentials"
+errors:
+  USER_NOT_FOUND: "User not found"
+  EMAIL_ALREADY_EXISTS: "Email already exists"
+  INVALID_CREDENTIALS: "Invalid credentials"
 
-  app:
-    upload:
-      dir: ${APP_UPLOAD_DIR:uploads/profiles}
+app:
+  upload:
+    dir: ${APP_UPLOAD_DIR:uploads/profiles}
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    # Polling interval (ms) used to receive Telegram updates without a public webhook.
+    poll-interval-ms: ${TELEGRAM_POLL_INTERVAL_MS:3000}
+    link-expiration-minutes: ${TELEGRAM_LINK_EXPIRATION_MINUTES:10}
+    # Group/supergroup chat id that receives operational and security alerts
+    # (destructive actions and risky logins). Leave blank to disable alerts.
+    alert-chat-id: ${TELEGRAM_ALERT_CHAT_ID:}

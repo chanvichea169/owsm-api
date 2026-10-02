@@ -7,6 +7,8 @@ public enum UserRole {
     ADMIN,
     HR,
     HEAD_OF_DEPARTMENT,
+    OFFICER,
+    USER,
     EMPLOYEE,
     MANAGER;
 

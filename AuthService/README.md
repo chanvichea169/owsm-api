@@ -2,6 +2,38 @@
 
 This project is the backend for a Hospital Management System, built with Spring Boot.
 
+## Run AuthService from an IDE
+
+The IDE run configuration does not inherit the environment variables from
+`docker-compose.yml`. Set these environment variables in the AuthService run
+configuration before starting the application:
+
+```text
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/auth_db
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=123
+JWT_SECRET=<Base64-encoded random key that decodes to at least 32 bytes>
+SERVER_PORT=8084
+```
+
+The PostgreSQL password shown is the local-development default in this
+repository's Compose configuration; use your local PostgreSQL password if it
+differs. Never use this development password outside a local environment.
+Generate a JWT key in PowerShell with:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+$rng.Dispose()
+```
+
+Copy the generated value into the IDE's `JWT_SECRET` field. Do not commit the
+generated key. The default application port is `8081`, which Compose also
+publishes for AuthService; use `8084` for the IDE process while that container
+owns port `8081`, or stop the container before setting `SERVER_PORT=8081`.
+
 ## Recent Changes: User Role Management & Flexible Login
 
 This update introduces a more robust way to handle user roles and enhances the login functionality to allow authentication using either username or email.

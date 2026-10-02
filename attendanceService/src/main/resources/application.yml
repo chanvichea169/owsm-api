@@ -40,3 +40,12 @@ spring:
 app:
   file:
     upload-dir: uploads
+
+auth:
+  service:
+    uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    alert-chat-id: ${TELEGRAM_ALERT_CHAT_ID:}

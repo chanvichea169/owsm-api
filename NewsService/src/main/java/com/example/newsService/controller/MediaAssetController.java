@@ -4,6 +4,7 @@ import com.example.newsService.dto.ApiResponse;
 import com.example.newsService.dto.MediaAssetResponse;
 import com.example.newsService.dto.request.MediaAssetRequest;
 import com.example.newsService.service.MediaAssetService;
+import com.example.newsService.service.TelegramAlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 public class MediaAssetController {
 
     private final MediaAssetService mediaAssetService;
+    private final TelegramAlertService telegramAlertService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<MediaAssetResponse>> create(@Valid @RequestBody MediaAssetRequest request) {
@@ -90,6 +92,10 @@ public class MediaAssetController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         mediaAssetService.delete(id);
+        telegramAlertService.destructiveAction(
+                "Media asset deleted",
+                "media asset id: " + id,
+                "news admin");
         return ResponseEntity.noContent().build();
     }
 

@@ -35,6 +35,7 @@ D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\co
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\service\NewsService.java
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\model\Author.java
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\dto\ApiResponse.java
+D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\service\TelegramAlertService.java
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\repository\CommentRepository.java
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\exception\ResourceNotFoundException.java
 D:\DFRMOI\owsm-dev\owsm_api\NewsService\src\main\java\com\example\newsService\service\CategoryService.java

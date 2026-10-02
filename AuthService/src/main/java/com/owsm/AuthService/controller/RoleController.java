@@ -2,6 +2,7 @@ package com.owsm.AuthService.controller;
 
 import com.owsm.AuthService.dto.RoleRequest;
 import com.owsm.AuthService.service.RoleService;
+import com.owsm.AuthService.service.TelegramAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/roles")
 public class RoleController {
     private final RoleService roleService;
+    private final TelegramAlertService telegramAlertService;
     @PostMapping
     public ResponseEntity<?> createRole(@RequestBody RoleRequest roleRequest) {
         try {
@@ -45,6 +47,10 @@ public class RoleController {
     public ResponseEntity<?> deleteRole(@PathVariable Long id) {
         try {
             roleService.deleteRole(id);
+            telegramAlertService.destructiveAction(
+                    "Role deleted",
+                    "role id: " + id,
+                    telegramAlertService.currentActor());
             return ResponseEntity.ok("Role deleted successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

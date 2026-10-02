@@ -5,19 +5,39 @@ import com.example.attendanceService.dto.CreateCompanyRequest;
 import com.example.attendanceService.dto.CompanyResponse;
 import com.example.attendanceService.dto.UpdateCompanyRequest;
 import com.example.attendanceService.model.Company;
+import com.example.attendanceService.repository.AttendanceRecordRepository;
 import com.example.attendanceService.repository.CompanyRepository;
+import com.example.attendanceService.repository.EmployeeRepository;
+import com.example.attendanceService.repository.OfficeRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
+    private final CompanyLogoStorageService logoStorageService;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+    private final EmployeeRepository employeeRepository;
+    private final OfficeRepository officeRepository;
 
-    public CompanyService(CompanyRepository companyRepository) {
+    public CompanyService(
+        CompanyRepository companyRepository,
+        CompanyLogoStorageService logoStorageService,
+        AttendanceRecordRepository attendanceRecordRepository,
+        EmployeeRepository employeeRepository,
+        OfficeRepository officeRepository
+    ) {
         this.companyRepository = companyRepository;
+        this.logoStorageService = logoStorageService;
+        this.attendanceRecordRepository = attendanceRecordRepository;
+        this.employeeRepository = employeeRepository;
+        this.officeRepository = officeRepository;
     }
 
     @CacheEvict(cacheNames = {"attendance-companies", "attendance-company"}, allEntries = true)
@@ -53,8 +73,28 @@ public class CompanyService {
     }
 
     @CacheEvict(cacheNames = {"attendance-companies", "attendance-company"}, allEntries = true)
+    public Company updateBranding(Long companyId, String name, MultipartFile logo) {
+        if (!StringUtils.hasText(name)) {
+            throw new IllegalArgumentException("Department name is required");
+        }
+        Company company = getCompany(companyId);
+        company.setName(name.trim());
+        if (logo != null && !logo.isEmpty()) {
+            company.setLogoPath(logoStorageService.store(logo));
+        }
+        return companyRepository.save(company);
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = {"attendance-companies", "attendance-company"}, allEntries = true)
     public void deleteCompany(Long companyId) {
         Company company = getCompany(companyId);
+        /* The foreign keys behind employees, offices and attendance records have
+           no cascade rule, so clear the rows that belong to this department
+           before deleting it. */
+        attendanceRecordRepository.deleteAllByCompanyId(companyId);
+        employeeRepository.deleteAllByCompanyId(companyId);
+        officeRepository.deleteAllByCompanyId(companyId);
         companyRepository.delete(company);
     }
 

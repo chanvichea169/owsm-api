@@ -10,6 +10,7 @@ import com.owsm.AuthService.securityaudit.enumeration.SecurityEventType;
 import com.owsm.AuthService.securityaudit.repository.AuthDeviceRepository;
 import com.owsm.AuthService.securityaudit.repository.LoginAuditRepository;
 import com.owsm.AuthService.securityaudit.repository.SecurityAuditRepository;
+import com.owsm.AuthService.service.TelegramAlertService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,18 +26,21 @@ public class AuthenticationAuditService {
     private final AuthDeviceRepository authDeviceRepository;
     private final ClientRequestInfoExtractor requestInfoExtractor;
     private final LoginRiskAssessmentService riskAssessmentService;
+    private final TelegramAlertService telegramAlertService;
 
     public AuthenticationAuditService(
             LoginAuditRepository loginAuditRepository,
             SecurityAuditRepository securityAuditRepository,
             AuthDeviceRepository authDeviceRepository,
             ClientRequestInfoExtractor requestInfoExtractor,
-            LoginRiskAssessmentService riskAssessmentService) {
+            LoginRiskAssessmentService riskAssessmentService,
+            TelegramAlertService telegramAlertService) {
         this.loginAuditRepository = loginAuditRepository;
         this.securityAuditRepository = securityAuditRepository;
         this.authDeviceRepository = authDeviceRepository;
         this.requestInfoExtractor = requestInfoExtractor;
         this.riskAssessmentService = riskAssessmentService;
+        this.telegramAlertService = telegramAlertService;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -166,6 +170,12 @@ public class AuthenticationAuditService {
             newDeviceEvent.setMetadata(requestMetadata(
                     info, Map.of("deviceType", info.deviceType() == null ? "unknown" : info.deviceType())));
             securityAuditRepository.save(newDeviceEvent);
+            telegramAlertService.securityEvent(
+                    "New device sign-in",
+                    "user: " + describe(user, identifier)
+                            + "\nip: " + asText(info.ipAddress())
+                            + "\ndevice: " + asText(info.deviceType()),
+                    describe(user, identifier));
         }
 
         if (risk.suspicious()) {
@@ -181,6 +191,13 @@ public class AuthenticationAuditService {
             suspiciousEvent.setDevice(device);
             suspiciousEvent.setMetadata(requestMetadata(info, Map.of("riskScore", risk.score())));
             securityAuditRepository.save(suspiciousEvent);
+            telegramAlertService.securityEvent(
+                    "Suspicious login detected",
+                    "user: " + describe(user, identifier)
+                            + "\nip: " + asText(info.ipAddress())
+                            + "\nrisk score: " + risk.score() + "/100"
+                            + "\nreason: " + (failureReason == null ? "risk detection rule" : failureReason),
+                    describe(user, identifier));
         }
     }
 
@@ -228,6 +245,32 @@ public class AuthenticationAuditService {
         event.setUserAgent(info.userAgent());
         event.setMetadata(requestMetadata(info, metadata == null ? Map.of() : metadata));
         securityAuditRepository.save(event);
+
+        if (status == SecurityEventStatus.DENIED || status == SecurityEventStatus.DETECTED) {
+            telegramAlertService.securityEvent(
+                    "Security event: " + eventType.name(),
+                    "user: " + describe(user, null)
+                            + "\nstatus: " + status.name()
+                            + "\nip: " + asText(info.ipAddress())
+                            + (description == null || description.isBlank() ? "" : "\nreason: " + description),
+                    user == null ? "system" : describe(user, null));
+        }
+    }
+
+    private static String describe(User user, String identifier) {
+        if (user != null) {
+            if (user.getUsername() != null && !user.getUsername().isBlank()) {
+                return user.getUsername();
+            }
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                return user.getEmail();
+            }
+        }
+        return identifier == null || identifier.isBlank() ? "unknown" : identifier;
+    }
+
+    private static String asText(Object value) {
+        return value == null ? "unknown" : String.valueOf(value);
     }
 
     private Map<String, Object> requestMetadata(ClientRequestInfo info, Map<String, ?> metadata) {

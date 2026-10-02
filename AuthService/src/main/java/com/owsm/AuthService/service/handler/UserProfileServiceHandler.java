@@ -37,7 +37,11 @@ public class UserProfileServiceHandler {
             response.setUser(
                     new UserProfileResponse.UserInnerResponse(
                             entity.getUser().getId(),
-                            entity.getUser().getEmail())
+                            entity.getUser().getEmail(),
+                            entity.getUser().getDepartmentId(),
+                            entity.getUser().getRole() == null || entity.getUser().getRole().getName() == null
+                                    ? null
+                                    : entity.getUser().getRole().getName().name())
             );
         }
 

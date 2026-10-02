@@ -12,6 +12,7 @@ public record CompanyResponse(
     String address,
     String phoneNumber,
     String email,
+    String logoUrl,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) implements java.io.Serializable {
@@ -26,6 +27,7 @@ public record CompanyResponse(
             company.getAddress(),
             company.getPhoneNumber(),
             company.getEmail(),
+            company.getLogoPath() == null ? null : "/api/companies/" + company.getId() + "/logo",
             company.getCreatedAt(),
             company.getUpdatedAt()
         );

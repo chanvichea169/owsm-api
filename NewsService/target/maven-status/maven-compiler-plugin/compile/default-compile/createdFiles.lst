@@ -61,4 +61,5 @@ com\example\newsService\dto\AuthorResponse.class
 com\example\newsService\model\Tag.class
 com\example\newsService\controller\CategoryController.class
 com\example\newsService\model\Comment$CommentBuilder.class
+com\example\newsService\service\TelegramAlertService.class
 com\example\newsService\dto\ApiErrorResponse.class
